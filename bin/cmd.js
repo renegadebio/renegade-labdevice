@@ -28,7 +28,26 @@ settings.device = argv.device || settings.device;
 settings.pubkey = argv.pubkey || settings.pubkey;
 settings.cmd = argv.cmd || settings.cmd;
 
-
 var pubKey = ssh2.utils.genPublicKey(ssh2.utils.parseKey(fs.readFileSync(settings.pubkey)));
 
 
+var conn = new Client();
+
+conn.on('ready', function() {
+    console.log("Connected!");
+});
+ 
+
+conn.connect({
+    host: settings.hostname,
+    port: settings.port,
+    username: settings.username,
+    privkey: fs.readFileSync(settings.privkey),
+    hostHash: 'sha1',
+    hostVerifier: function(hashedKey) {
+        if(hashedKey === settings.hosthash) {
+            return true;
+        }
+        return false;
+    }
+});

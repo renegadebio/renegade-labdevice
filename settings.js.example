@@ -10,8 +10,14 @@ module.exports = {
     hostname: "localhost",
     port: 4200,
 
-    // Path to ssh key to use for authentication
-    pubkey: path.join(__dirname, 'mykey.pub'),
+    // SHA1 hash of hosts public key
+    hosthash: "sha1-of-hosts-pubkey",
+
+    // ssh username
+    username: "myprinter",
+
+    // Path to ssh private key to use for authentication
+    privkey: path.join(__dirname, 'mykey'),
 
     // The print command
     cmd: "ql570"
