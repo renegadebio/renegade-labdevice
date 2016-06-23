@@ -1,0 +1,19 @@
+
+var path = require('path');
+
+module.exports = {
+
+    // The printer device
+    device: '/dev/ttyUSB0',
+
+    // The bionet nodes host name to which you wish to connect
+    hostname: "localhost",
+    port: 4200,
+
+    // Path to ssh key to use for authentication
+    pubkey: path.join(__dirname, 'mykey.pub'),
+
+    // The print command
+    cmd: "ql570"
+    
+};
