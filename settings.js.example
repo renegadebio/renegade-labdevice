@@ -3,12 +3,19 @@ var path = require('path');
 
 module.exports = {
 
+    // The printer name
+    // Used to identify this printer on servers with multiple printers
+    name: "my-lab-1",
+
     // The printer device
-    device: '/dev/ttyUSB0',
+    device: '/dev/usb/lp0',
 
     // The bionet nodes host name to which you wish to connect
     hostname: "localhost",
     port: 4200,
+
+    // Enable debug output
+    debug: false,
 
     // SHA1 hash of hosts public key
     hosthash: "sha1-of-hosts-pubkey",
@@ -20,6 +27,9 @@ module.exports = {
     privkey: path.join(__dirname, 'mykey'),
 
     // The print command
-    cmd: "ql570"
+    cmd: "ql570",
+
+    // How often to check if the server is still there
+    heartbeatRate: 3 // seconds
     
 };

@@ -47,7 +47,13 @@ and edit to taste.
 
 # Permissions
 
-Ensure your user has write access to the printer device defined in the settings file.
+Ensure your user has write access to the printer device defined in the settings file. On ubuntu/debian systems you can do this using:
+
+```
+sudo usermod -a -G lp myUser
+```
+
+Where `myUser` is the username of the user that will be runnning this program. You will have to log out and log back in for the change to take effect.
 
 Ensure that the generated private key is only readable by root and the user that will be running the this program.
 
