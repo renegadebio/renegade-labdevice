@@ -84,6 +84,7 @@ function printLabel(path, cb) {
 function getLabel(filename, cb) {
 
     conn.exec('getLabel ' + filename, function(err, stream) {
+
         if(err) return console.error(err);
         var errBuf;
 
@@ -195,6 +196,9 @@ function connect() {
 
     conn.on('error', function(err) {
         console.error("Connection error:", err);
+
+        console.log("Attempting reconnect in 10 seconds");
+        setTimeout(connect, 10 * 1000);
     });
 
 }
