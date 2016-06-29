@@ -10,24 +10,47 @@ Connections are made using [ssh2](https://github.com/mscdex/ssh2).
 * Brother QL-570
 * Brother QL-700
 
+Other similar models may work but have not been tested.
+
 # Dependencies
 
-To install the C program that talks to the printer:
+## installing node.js
+
+You might already have node.js installed. If so, ensure it is a recent version. If not, first log in as the non-root user you intend to run this application, then install nvm (node version manager):
 
 ```
-sudo apt-get install build-essential
-git clone https://github.com/sudomesh/ql570
-cd ql570/
-make
-sudo make install
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
 ```
 
-For the node dependencies do:
+Log out, then log back in, then use nvm to install node:
+
+```
+nvm install 4.4.7
+```
+
+Now clone this repository into the user's homedir:
+
+```
+cd ~/
+git clone https://github.com/biobricks/bionet-labelprinter
+```
+
+To install the node dependencies do:
 
 ```
 cd bionet-labelprinter/
 npm install
 ```
+
+## printer driver
+
+To install the C program that talks to the printer, fetch the ql-printer-driver repository:
+
+```
+git clone https://github.com/biobricks/ql-printer-driver
+```
+
+and follow the instructions in the included README.md
 
 # Generate key pair
 
@@ -67,8 +90,42 @@ npm start
 
 # Setting up for production
 
-ToDo write me
+The bionet-labelprinter software should be installed under a non-root user account, so as root add a user account, e.g:
 
+```
+adduser bionet
+```
+
+Then log in as that user, ensure you are in the user's homedir and follow the instructions at the top of the README for installing this application and its dependencies. 
+
+Now for making the app auto start when the computer boots and auto restart when it crashes.
+
+First install the psy process monitor globally:
+
+```
+npm install -g psy
+```
+
+Then as root:
+
+```
+sudo cp production/bionet-labelprinter.initd /etc/init.d/bionet-labelprinter
+chmod 755 /etc/init.d/bionet-labelprinter
+```
+
+If you used a different username than `bionet` then you'll need to change the `runAsUser` line in the init.d file.
+
+Test that it works. As root do:
+
+```
+/etc/init.d/bionet-labelprinter start
+```
+
+If it's working make it auto-start on reboot:
+
+```
+update_rc.d bionet-labelprinter defaults
+```
 
 # ToDo
 
