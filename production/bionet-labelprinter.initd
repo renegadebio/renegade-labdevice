@@ -14,12 +14,10 @@
 # Source function library.
 . /lib/lsb/init-functions
 
-logFile="/home/bionet/bionet-labelprinter.log"
-
 runAsUser="bionet"
 appName="bionet-labelprinter"
 workingDir="/home/${runAsUser}/bionet-labelprinter"
-
+logFile="/home/${runAsUser}/bionet-labelprinter.log"
 nodeCommand="node"
 nodeApp="${workingDir}/bin/cmd.js"
 runnerApp="psy"
@@ -28,12 +26,11 @@ runnerApp="psy"
 cmdPrefix="export NVM_DIR=/home/\$USER/.nvm; . /home/\$USER/.nvm/nvm.sh;"
 
 start() {
-   echo "Starting $nodeApp"
+  echo "Starting $nodeApp"
 
   cd $workingDir
-
-  cmd="$runnerApp start --logfile $logFile --name $appName -- $nodeCommmand $nodeApp"
-  su $runAsUser -l -c "$cmdPrefix $cmd"
+  cmd="$cmdPrefix $runnerApp start --logfile $logFile --name $appName -- $nodeCommmand $nodeApp"
+  su $runAsUser -l -c "$cmd"
 
   RETVAL=$?
 }

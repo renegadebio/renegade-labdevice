@@ -55,6 +55,7 @@ and follow the instructions in the included README.md
 # Generate key pair
 
 ```
+cd /home/bionet/bionet-labelprinter # ensure you are in the app directory
 ssh-keygen -t rsa -f mykey -N ""
 ```
 
@@ -118,6 +119,7 @@ If you used a different username than `bionet` then you'll need to change the `r
 Test that it works. As root do:
 
 ```
+systemctl daemon-reload # only if using systemd
 /etc/init.d/bionet-labelprinter start
 ```
 
@@ -127,9 +129,11 @@ If it's working make it auto-start on reboot:
 update_rc.d bionet-labelprinter defaults
 ```
 
+
+
 # ToDo
 
-* Start as root, read private key, drop permissions
+* Make it start as root, read private key, then drop permissions
 
 # License and Copyright
 
