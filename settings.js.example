@@ -27,7 +27,7 @@ module.exports = {
     privkey: path.join(__dirname, 'mykey'),
 
     // The print command
-    cmd: "ql570",
+    cmd: "ql_print",
 
     // How often to check if the server is still there
     heartbeatRate: 3 // seconds

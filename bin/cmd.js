@@ -1,26 +1,29 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
+var path = require('path');
 var childProcess = require('child_process');
 var ssh2 = require('ssh2');
 var minimist = require('minimist');
 var ndjson = require('ndjson');
 var tmp = require('tmp');
+var uuid = require('uuid').v4;
+var rpc = require('rpc-multistream');
 
 var argv = minimist(process.argv.slice(2), {
-    alias: {
-        D: 'debug',
-        p: 'port',
-        h: 'host',
-        d: 'device',
-        p: 'pubkey',
-        c: 'cmd'
-    },
-    boolean: [
-        'debug'
-    ],
-    default: {
-    }
+  alias: {
+    D: 'debug',
+    p: 'port',
+    h: 'host',
+    d: 'device',
+    p: 'pubkey',
+    c: 'cmd'
+  },
+  boolean: [
+    'debug'
+  ],
+default: {
+}
 });
 
 var settings = require('../settings.js');
@@ -36,170 +39,128 @@ console.log("Using printer name:", settings.name);
 var conn;
 
 function debug(str) {
-    if(!settings.debug) return;
+  if(!settings.debug) return;
 
-    console.log('[debug] ', str);
+  console.log('[debug] ', str);
 }
 
-var lastBeat;
-
-function gotHeartbeat(fake) {
-    if(!fake) debug("received heartbeat from server");
-    lastBeat = new Date();
+function getNodeID() {
+  var filepath = path.join(__dirname, '..', "node_id");
+  var id;
+  try {
+    id = fs.readFileSync(filepath, {encoding: 'utf8'});
+    if(id.length !== 36) throw new Error("invalid node ID... regenerating");
+  } catch(e) {
+    id = uuid();
+    fs.writeFileSync(filepath, id);
+    return id;
+  }                 
 }
 
-function heartbeat(outStream, cb) {
-
-    var diff = (new Date() - lastBeat) / 1000;
-    
-    if(diff > (settings.heartbeatRate * 3 + 1)) {
-        cb("Missed three heartbeat responses in a row");
-        return;
-    }
-
-    outStream.write({type: 'heartbeat'});
-    debug("sent heartbeat");
-
-    setTimeout(function() {
-        heartbeat(outStream, cb);
-    }, settings.heartbeatRate * 1000);
-}
-
+var nodeID = getNodeID();
 
 function printLabel(path, cb) {
+  console.log("Printing:", path);
 
-    console.log("Printing:", path);
+  var cmd = settings.cmd + ' ' + settings.device + ' w ' + path;
 
-    var cmd = settings.cmd + ' ' + settings.device + ' n ' + path;
-
-    childProcess.exec(cmd, function(err, stdout, stderr) {
-        if(err) return cb(err);
-//        fs.unlink(path, function(unlinkErr) {
-
-            cb();
-//        });
-    });
+  childProcess.exec(cmd, function(err, stdout, stderr) {
+    if(err) return cb(err);
+    cb();
+  });
 }
 
-function getLabel(filename, cb) {
 
-    conn.exec('getLabel ' + filename, function(err, stream) {
-
-        if(err) return console.error(err);
-        var errBuf;
-
-        // generate unique temporary file name
-        tmp.tmpName(function(err, path) {
-            if(err) return cb(err);
-
-            var out = fs.createWriteStream(path);
-            debug("opened temporary file: " + path);
-
-            out.on('error', function(err) {
-                console.error("error writing temporary file:", err);
-                out.close();
-                fs.unlink(path);
-                cb(err);
-            });
-
-            stream.pipe(out);
-            
-            stream.stderr.on('data', function(data) {
-                if(errBuf) {
-                    errBuf = Buffer.concat([errBuf, data]);
-                } else {
-                    errBuf = data;
-                }
-            });
-            var fail = false;
-            stream.on('close', function(code, signal) {
-                if(code) {
-                    console.error("Server error:", errBuf.toString('utf8'));
-                    fs.unlink(path);
-                    fail = true;
-                }
-            });
-            out.on('finish', function() {
-                if(fail) return;
-                cb(null, path);
-            });
-        })
+var clientRPC = {
+  identify: function(cb) {
+    cb(null, {
+      id: nodeID,
+      name: settings.name
     });
+  },
 
-}
+  print: function(stream, cb) {
+    tmp.tmpName(function(err, path) {
+      if(err) return cb(err);
+      var out = fs.createWriteStream(path);
 
+      stream.pipe(out);
+
+      debug("opened temporary file: " + path);
+
+      out.on('error', function(err) {
+        console.error("error writing temporary file:", err);
+        out.close();
+        fs.unlink(path);
+        cb(err);
+      });
+      
+      stream.on('end', function() {
+        printLabel(path, function(err) {
+          fs.unlink(path);
+          cb(err);
+        });
+      });
+    });
+  }
+};
 
 
 function connect() {
-    console.log("Connecting to: "+settings.hostname+":"+settings.port);
+  console.log("Connecting to: "+settings.hostname+":"+settings.port);
 
-    conn = new ssh2.Client();
-    conn.connect({
-        host: settings.hostname,
-        port: settings.port,
-        username: settings.username,
-        privateKey: fs.readFileSync(settings.privkey),
-        hostHash: 'sha1',
-        hostVerifier: function(hashedKey) {
-            if(hashedKey === settings.hosthash) {
-                return true;
-            }
-            console.log("Untrusted host key!");
-            console.log("If you want to trust this host, set settings.hosthash to:");
-            console.log("  "+hashedKey);
-            console.log("");
-            return false;
-        }
+  conn = new ssh2.Client();
+  conn.connect({
+    host: settings.hostname,
+    port: settings.port,
+    username: settings.username,
+    privateKey: fs.readFileSync(settings.privkey),
+    hostHash: 'sha1',
+    hostVerifier: function(hashedKey) {
+      if(hashedKey === settings.hosthash) {
+        return true;
+      }
+      console.log("Untrusted host key!");
+      console.log("If you want to trust this host, set settings.hosthash to:");
+      console.log("  "+hashedKey);
+      console.log("");
+      return false;
+    }
+  });
+
+  conn.on('ready', function() {
+    console.log("Connected!");
+
+    conn.exec('stream', function(err, stream) {
+      if(err) return console.error(err);
+
+      var client = rpc(clientRPC, {
+        heartbeat: 5000, // send heartbeat every 5000 ms
+        maxMissedBeats: 3.5 // die after 3.5 times the above timeout
+      });
+
+      // if heartbeat fails
+      client.on('death', function() {
+        conn.end();
+        debug("heartbeat timeout. disconnecting");
+        debug("will attempt reconnect in 3 seconds");
+        setTimeout(connect, 3000);
+      });
+
+      client.pipe(stream).pipe(client);
+      client.on('methods', function(remote) {
+        
+      });
     });
+  });
+  
 
-    conn.on('ready', function() {
-        console.log("Connected!");
+  conn.on('error', function(err) {
+    console.error("Connection error:", err);
 
-        conn.exec('msgChannel ' + settings.name, function(err, stream) {
-            if(err) return console.error(err);
-            var input = stream.pipe(ndjson.parse());
-            var output = ndjson.serialize();
-            output.pipe(stream);
-
-            gotHeartbeat(true);
-            
-            input.on('data', function(msg) {
-                if(msg.type === 'heartbeat') return gotHeartbeat();
-
-                if(msg.type === 'print' && msg.filename) {
-                    getLabel(msg.filename, function(err, path) {
-                        if(err) return console.error(err);
-                        
-
-                        printLabel(path, function(err) {
-                            if(err) console.error(err);
-                            console.log("Sent label to printer:", msg.filename);
-                            // ToDo tell server 
-                        });
-                    });
-                } else {
-                    console.error("Got unknown message of type:", msg.type);
-                }
-            });
-
-            heartbeat(output, function(err) {
-                if(err) {
-                    conn.end();
-                    console.error("Disconnected:", err);
-                    console.log("Attempting reconnect in 10 seconds");
-                    setTimeout(connect, 10 * 1000);
-                }
-            });
-        });
-    });
-    
-
-    conn.on('error', function(err) {
-        console.error("Connection error:", err);
-
-        console.log("Attempting reconnect in 10 seconds");
-        setTimeout(connect, 10 * 1000);
-    });
+    console.log("Attempting reconnect in 10 seconds");
+    setTimeout(connect, 10 * 1000);
+  });
 
 }
 
