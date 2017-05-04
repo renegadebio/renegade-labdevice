@@ -89,6 +89,10 @@ Then run:
 npm start
 ```
 
+# Testing
+
+You can test this client using `bin/print_server_test.js` from the main bionet app. 
+
 # Setting up for production
 
 The bionet-labelprinter software should be installed under a non-root user account, so as root add a user account, e.g:
@@ -128,8 +132,6 @@ If it's working make it auto-start on reboot:
 ```
 update_rc.d bionet-labelprinter defaults
 ```
-
-
 
 # ToDo
 
