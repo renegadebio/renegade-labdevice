@@ -155,10 +155,13 @@ function webcamScanStop() {
   webcamScanning = false;
 }
 
+var hidScanner;
+
 function keyboardScanStart(remote) {
   try {
     var parts = settings.device.split(':');
     var dev = new HID.HID(parseInt(parts[0], 16), parseInt(parts[1], 16));
+    hidScanner = dev;
   } catch(e) {
     console.error("Failed to open USB HID scanner:", e);
     console.error("Hint: You may need to be root or grant required permissions");
@@ -193,14 +196,15 @@ function keyboardScanStart(remote) {
     }
   });
 
-  dev.on('line', function(line) {
-    console.log("GOT:", line)
+  dev.on('line', function(code) {
+    console.log("GOT:", code)
+    remote.reportScan(code);
   });
 
 }
 
 function keyboardScanStop() {
-
+  hidScanner.close();
 }
 
 function disconnect(conn) {
