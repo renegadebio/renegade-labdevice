@@ -188,7 +188,7 @@ systemctl daemon-reload # only if using systemd
 If it's working make it auto-start on reboot:
 
 ```
-update_rc.d bionet-labdevice defaults
+update-rc.d bionet-labdevice defaults
 ```
 
 # ToDo
