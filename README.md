@@ -55,7 +55,31 @@ cd bionet-labdevice/
 npm install
 ```
 
-## printer driver
+## bluetooth dependencies
+
+For bluetooth support install:
+
+```
+sudo apt install bluetooth bluez libbluetooth-dev libudev-dev libcap2-bin
+```
+
+Then grant your node.js binary the `cap_net_raw` privilege to allow it to control the bluetooth chip without being run as root. As the user that will be running this program, run:
+
+```
+which node
+```
+
+and ctrl-c the output.
+
+Then as root run:
+
+```
+setcap cap_net_raw+eip $(eval readlink -f <node_path>)
+```
+
+where `<node_path>` is the output from the `which node` command.
+
+## printer driver dependencies
 
 If you're using this with a printer install the C program that talks to the printer, fetch the ql-printer-driver repository:
 
@@ -65,7 +89,7 @@ git clone https://github.com/biobricks/ql-printer-driver
 
 and follow the instructions in the included README.md
 
-## webcam scanner
+## webcam scanner dependencies
 
 If you're using this with a webcam-based barcode scanner, install these packages:
 
@@ -75,7 +99,7 @@ sudo apt install streamer dmtx-utils v4l-utils
 
 The `streamer` utility captures single frames from the webcam. `dmtx-utils` provides the `dmtxread` command that decodes DataMatrix codes from the captured image and `v4l-utils` sets the brightness and contrast of the webcam.
 
-## HID/keyboard scanner
+## HID/keyboard scanner dependencies
 
 If you're using this with a USB barcode scanner that pretends to be a USB keyboard (most hand-held type USB barcode scanners are like this) then you don't need to install any other packages.
 
