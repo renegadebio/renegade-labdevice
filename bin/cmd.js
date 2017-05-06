@@ -3,12 +3,15 @@
 var fs = require('fs');
 var path = require('path');
 var childProcess = require('child_process');
+var HID = require('node-hid');
 var ssh2 = require('ssh2');
 var minimist = require('minimist');
 var ndjson = require('ndjson');
 var tmp = require('tmp');
 var uuid = require('uuid').v4;
 var rpc = require('rpc-multistream');
+
+var scancodeDecode = require('../scancode_decode.js');
 
 var argv = minimist(process.argv.slice(2), {
   alias: {
@@ -121,7 +124,7 @@ function webcamInit(cb) {
 }
 
 function webcamScan(cb) {
-  var cmd = "streamer -q -f jpeg -s 1024x768 -o /dev/stdout | dmtxread -m 200 -N1 /dev/stdin";
+  var cmd = "streamer -q -c "+settings.device+" -f jpeg -s 1024x768 -o /dev/stdout | dmtxread -m 200 -N1 /dev/stdin";
 
   childProcess.exec(cmd, function(err, stdout, stderr) {
     if(err && stderr.length) console.error(err);
@@ -153,7 +156,47 @@ function webcamScanStop() {
 }
 
 function keyboardScanStart(remote) {
-  throw new Error("not implemented");
+  try {
+    var parts = settings.device.split(':');
+    var dev = new HID.HID(parseInt(parts[0], 16), parseInt(parts[1], 16));
+  } catch(e) {
+    console.error("Failed to open USB HID scanner:", e);
+    console.error("Hint: You may need to be root or grant required permissions");
+    return;
+  }
+
+  console.log("Initialized USB HID barcode scanner");
+
+  dev.on('error', function(err) {
+    console.error("Scanner error: " + err);
+  });
+
+  dev.on('data', function(data) {
+    
+    var str = scancodeDecode(data);
+    if(str) {
+      var i;
+      for(i=0; i < str.length; i++) {
+        dev.emit('char', str[i]);
+      }
+    }
+  });
+  
+  var lineBuffer = '';
+
+  dev.on('char', function(char) {
+    lineBuffer += char;
+    
+    if(char == '\n') {
+      dev.emit('line', lineBuffer.trim());
+      lineBuffer = '';
+    }
+  });
+
+  dev.on('line', function(line) {
+    console.log("GOT:", line)
+  });
+
 }
 
 function keyboardScanStop() {
@@ -220,7 +263,7 @@ function connect() {
           return;
         }
         if(settings.deviceType === 'keyboardScanner') {
-          keyboardScanStop(remote);
+          keyboardScanStart(remote);
           return;
         }
       });
