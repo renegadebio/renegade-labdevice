@@ -248,7 +248,7 @@ function connect() {
       if(err) return console.error(err);
 
       var client = rpc(clientRPC, {
-        heartbeat: 5000, // send heartbeat every 5000 ms
+        heartbeat: settings.heartbeatRate, // send heartbeat every 5000 ms
         maxMissedBeats: 3.5 // die after 3.5 times the above timeout
       });
 
