@@ -101,7 +101,11 @@ The `streamer` utility captures single frames from the webcam. `dmtx-utils` prov
 
 ## HID/keyboard scanner dependencies
 
-If you're using this with a USB barcode scanner that pretends to be a USB keyboard (most hand-held type USB barcode scanners are like this) then you don't need to install any other packages.
+If you're using this with a USB barcode scanner that pretends to be a USB keyboard (most hand-held type USB barcode scanners are like this) then you might need:
+
+```
+sudo apt install build-essential git gcc-4.8 g++-4.8 libusb-1.0-0 libusb-1.0-0-dev
+```
 
 # Generate key pair
 

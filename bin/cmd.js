@@ -100,7 +100,7 @@ var clientRPC = {
         cb(err);
       });
       
-      stream.on('end', function() {
+      out.on('finish', function() {
         printLabel(path, function(err) {
           fs.unlink(path);
           cb(err);
