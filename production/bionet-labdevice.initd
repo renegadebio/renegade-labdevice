@@ -1,13 +1,13 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:          bionet-labelprinter
+# Provides:          bionet-labdevice
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: psy running bionet-labelprinter
-# Description:       psy running bionet-labelprinter
+# Short-Description: psy running bionet-labdevice
+# Description:       psy running bionet-labdevice
 ### END INIT INFO
 #
 
@@ -15,9 +15,9 @@
 . /lib/lsb/init-functions
 
 runAsUser="bionet"
-appName="bionet-labelprinter"
-workingDir="/home/${runAsUser}/bionet-labelprinter"
-logFile="/home/${runAsUser}/bionet-labelprinter.log"
+appName="bionet-labdevice"
+workingDir="/home/${runAsUser}/bionet-labdevice"
+logFile="/home/${runAsUser}/bionet-labdevice.log"
 nodeCommand="node"
 nodeApp="${workingDir}/bin/cmd.js"
 runnerApp="psy"
