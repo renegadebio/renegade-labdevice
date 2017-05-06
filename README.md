@@ -194,6 +194,8 @@ update_rc.d bionet-labdevice defaults
 # ToDo
 
 * Make it start as root, read private key, then drop permissions
+* Hook BLE scanning into the RPC system
+* Implement remote software update
 
 # License and Copyright
 
