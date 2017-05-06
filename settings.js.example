@@ -7,10 +7,14 @@ module.exports = {
     // Used to identify this printer on servers with multiple printers
     name: "my-lab-1",
 
-    // The printer device
+    deviceType: 'printer', // 'printer' or 'webcamScanner' or 'keyboardScanner'
+
+    // printer is likely: /dev/usb/lp0
+    // webcam is likely: /dev/video0
+    // HID/keyboard is one of the devices in: /dev/input/by-id/
     device: '/dev/usb/lp0',
 
-    // The bionet nodes host name to which you wish to connect
+    // The bionet node's host name to which you wish to connect
     hostname: "localhost",
     port: 4200,
 

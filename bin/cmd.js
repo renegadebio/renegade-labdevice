@@ -34,7 +34,7 @@ settings.pubkey = argv.pubkey || settings.pubkey;
 settings.cmd = argv.cmd || settings.cmd;
 settings.name = settings.name.replace(/^\w\d\.\-_]+/, '-');
 
-console.log("Using printer name:", settings.name);
+console.log("Using device name:", settings.name);
 
 var conn;
 
@@ -75,11 +75,13 @@ var clientRPC = {
   identify: function(cb) {
     cb(null, {
       id: nodeID,
-      name: settings.name
+      name: settings.name,
+      type: settings.deviceType
     });
   },
 
   print: function(stream, cb) {
+    if(settings.deviceType !== 'printer') return cb(new Error("This is not a printer"));
     tmp.tmpName(function(err, path) {
       if(err) return cb(err);
       var out = fs.createWriteStream(path);
@@ -105,6 +107,70 @@ var clientRPC = {
   }
 };
 
+var webcamScanning = false;
+
+function webcamInit(cb) {
+  childProcess.exec("v4l2-ctl -c brightness=100", function(err, stdout, stderr) {
+    if(err) return cb(err);
+    childProcess.exec("v4l2-ctl -c contrast=100", function(err, stdout, stderr) {
+      if(err) return cb(err);
+      webcamScanning = true;
+      cb();
+    });
+  });
+}
+
+function webcamScan(cb) {
+  var cmd = "streamer -q -f jpeg -s 1024x768 -o /dev/stdout | dmtxread -m 200 -N1 /dev/stdin";
+
+  childProcess.exec(cmd, function(err, stdout, stderr) {
+    if(err && stderr.length) console.error(err);
+    if(!webcamScanning) return;
+    var code = stdout.trim();
+    if(code.length) {
+      cb(null, code);
+    }
+    if(webcamScanning) {
+      webcamScan(cb);
+    }
+  });
+}
+
+function webcamScanStart(remote) {
+
+  webcamInit(function(err, cb) {
+    if(err) return console.error(err);
+    webcamScan(function(err, code) {
+      if(err) return console.error(err);
+      console.log("GOT:", code);
+      remote.reportScan(code);
+    });
+  });
+}
+
+function webcamScanStop() {
+  webcamScanning = false;
+}
+
+function keyboardScanStart(remote) {
+  throw new Error("not implemented");
+}
+
+function keyboardScanStop() {
+
+}
+
+function disconnect(conn) {
+  conn.end();
+  if(settings.deviceType === 'webcamScanner') {
+    webcamScanStop();
+    return;
+  }
+  if(settings.deviceType === 'keyboardScanner') {
+    keyboardScanStop();
+    return;
+  }
+}
 
 function connect() {
   console.log("Connecting to: "+settings.hostname+":"+settings.port);
@@ -141,7 +207,7 @@ function connect() {
 
       // if heartbeat fails
       client.on('death', function() {
-        conn.end();
+        disconnect(conn);
         debug("heartbeat timeout. disconnecting");
         debug("will attempt reconnect in 3 seconds");
         setTimeout(connect, 3000);
@@ -149,7 +215,14 @@ function connect() {
 
       client.pipe(stream).pipe(client);
       client.on('methods', function(remote) {
-        
+        if(settings.deviceType === 'webcamScanner' && remote.reportScan) {
+          webcamScanStart(remote);
+          return;
+        }
+        if(settings.deviceType === 'keyboardScanner') {
+          keyboardScanStop(remote);
+          return;
+        }
       });
     });
   });
