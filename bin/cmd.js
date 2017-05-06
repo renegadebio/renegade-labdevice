@@ -36,6 +36,7 @@ settings.device = argv.device || settings.device;
 settings.pubkey = argv.pubkey || settings.pubkey;
 settings.cmd = argv.cmd || settings.cmd;
 settings.name = settings.name.replace(/^\w\d\.\-_]+/, '-');
+settings.debug = argv.debug || settings.debug;
 
 console.log("Using device name:", settings.name);
 
