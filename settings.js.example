@@ -33,7 +33,12 @@ module.exports = {
     // The print command
     cmd: "ql_print",
 
+    // The paper type. 'n' for narrow paper or 'w' for wide paper
+    // If the printer LED blinks red when trying to print
+    // then you probably have the wrong paperType 
+    paperType: 'n',
+
     // How often to check if the server is still there
-    heartbeatRate: 3 // seconds
+    heartbeatRate: 3000 // in ms
     
 };

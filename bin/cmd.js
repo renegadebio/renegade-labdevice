@@ -57,8 +57,8 @@ function getNodeID() {
   } catch(e) {
     id = uuid();
     fs.writeFileSync(filepath, id);
-    return id;
-  }                 
+  }           
+  return id;      
 }
 
 var nodeID = getNodeID();
@@ -66,7 +66,7 @@ var nodeID = getNodeID();
 function printLabel(path, cb) {
   console.log("Printing:", path);
 
-  var cmd = settings.cmd + ' ' + settings.device + ' w ' + path;
+  var cmd = settings.cmd + ' ' + settings.device + ' ' + (settings.paperType || 'n')  + ' ' + path;
 
   childProcess.exec(cmd, function(err, stdout, stderr) {
     if(err) return cb(err);
@@ -146,7 +146,6 @@ function webcamScanStart(remote) {
     if(err) return console.error(err);
     webcamScan(function(err, code) {
       if(err) return console.error(err);
-      console.log("GOT:", code);
       remote.reportScan(code);
     });
   });
@@ -249,7 +248,7 @@ function connect() {
       if(err) return console.error(err);
 
       var client = rpc(clientRPC, {
-        heartbeat: settings.heartbeatRate, // send heartbeat every 5000 ms
+        heartbeat: settings.heartbeatRate, // send heartbeat every 3000 ms
         maxMissedBeats: 3.5 // die after 3.5 times the above timeout
       });
 
