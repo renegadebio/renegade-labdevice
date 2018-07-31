@@ -193,7 +193,8 @@ update-rc.d bionet-labdevice defaults
 
 # ToDo
 
-* Make it start as root, read private key, then drop permissions
+* Start as root, read private key, then drop permissions
+* Report [USB connection status](https://unix.stackexchange.com/questions/216223/how-to-make-cups-show-a-usb-printer-as-disabled-when-it-is-disconnected)
 * Hook BLE scanning into the RPC system
 * Implement remote software update
 
@@ -201,5 +202,5 @@ update-rc.d bionet-labdevice defaults
 
 License is GPLv3
 
-* Copyright 2016, 2017 BioBricks Foundation 
+* Copyright 2016, 2017, 2018 BioBricks Foundation 
 

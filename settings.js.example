@@ -3,42 +3,63 @@ var path = require('path');
 
 module.exports = {
 
-    // The printer name
-    // Used to identify this printer on servers with multiple printers
-    name: "my-lab-1",
+  // name of this labdevice server
+  name: "EndyLab Lab-device Server 1",
 
-    deviceType: 'printer', // 'printer' or 'webcamScanner' or 'keyboardScanner'
+  devices: [{
+    // The device (scanner or printer) name
+    // Used to identify this device on servers with multiple devices
+    // It is a good idea to include the physical location in this name
+    // MUST NOT CONTAIN SINGLE QUOTES (')
+    name: "Dymo LabelWriter 4XL - NW Corner",
 
-    // printer is likely: /dev/usb/lp0
-    // webcam is likely: /dev/video0
-    // HID/keyboard is one of the devices in: /dev/input/by-id/
+    // The device identifier
+    // qlPrinter is likely: /dev/usb/lp0
+    // dymoPrinter is the printer name as given by `lpstat -p`
+    //   e.g. "DYMO-LabelWriter-4XL-17032419591234"
+    // webcamScanner is likely: /dev/video0
+    // keyboardScanner is "vendor_id:product_id" as reported by lsusb
+    //   e.g: "060e:16c1"
     device: '/dev/usb/lp0',
 
-    // The bionet node's host name to which you wish to connect
-    hostname: "localhost",
-    port: 4200,
+    // type can be one of:
+    // 'qlPrinter'
+    // 'dymoPrinter'
+    // 'webcamScanner'
+    // 'keyboardScanner'
+    type: 'dymoPrinter',
 
-    // Enable debug output
-    debug: false,
+    // The print command. Only relevant for printers.
+    // For the 'qlPrinter' type this should be the path ql570 command,
+    // or just 'ql570' if the command is in your PATH
+    // For the 'dymoPrinter' type it is probably safe to leave it at 'lpr'
+    // Default for qlPrinter: 'ql570'
+    // Default for dymoPrinter: 'lpr'
+    cmd: "ql570",
 
-    // SHA1 hash of hosts public key
-    hosthash: "sha1-of-hosts-pubkey",
-
-    // ssh username
-    username: "myprinter",
-
-    // Path to ssh private key to use for authentication
-    privkey: path.join(__dirname, 'mykey'),
-
-    // The print command
-    cmd: "ql_print",
-
+    // Only relevant for type: 'qlPrinter'
     // The paper type. 'n' for narrow paper or 'w' for wide paper
-    // If the printer LED blinks red when trying to print
-    // then you probably have the wrong paperType 
-    paperType: 'n',
+    // Default: 'n'
+    paperType: 'n'
+  }],
 
-    // How often to check if the server is still there
-    heartbeatRate: 3000 // in ms
-    
+  // The bionet node's host name to which you wish to connect
+  hostname: "localhost",
+  port: 4200,
+
+  // Enable debug output
+  debug: false,
+
+  // SHA1 hash of hosts public key
+  hosthash: "sha1-of-hosts-pubkey",
+
+  // ssh username
+  username: "myprinter",
+
+  // Path to ssh private key to use for authentication
+  privkey: path.join(__dirname, 'mykey'),
+
+  // How often to check if the server is still there
+  heartbeatRate: 3000 // in ms
+  
 };

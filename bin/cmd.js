@@ -63,10 +63,16 @@ function getNodeID() {
 
 var nodeID = getNodeID();
 
-function printLabel(path, cb) {
-  console.log("Printing:", path);
+function printLabel(device, path, cb) {
+  console.log("On device '"+device.name+"' printing:", path);
 
-  var cmd = settings.cmd + ' ' + settings.device + ' ' + (settings.paperType || 'n')  + ' ' + path;
+  var cmd;
+
+  if(device.type === 'qlPrinter') {
+    cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " '" + path + "'";
+  } else if(device.type === 'dymoPrinter') {
+    cmd = "lpr -P '"+device.device+"' -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 '"+path+"'"
+  }
 
   childProcess.exec(cmd, function(err, stdout, stderr) {
     if(err) return cb(err);
@@ -77,15 +83,31 @@ function printLabel(path, cb) {
 
 var clientRPC = {
   identify: function(cb) {
+    var devices = [];
+    var i, device;
+    for(i=0; i < settings.devices.length; i++) {
+      device = settings.devices[i];
+      devices.push({
+        index: i,
+        name: device.name,
+        type: device.type
+      })
+    }
+
     cb(null, {
       id: nodeID,
       name: settings.name,
-      type: settings.deviceType
+      devices: devices
     });
   },
 
-  print: function(stream, cb) {
-    if(settings.deviceType !== 'printer') return cb(new Error("This is not a printer"));
+
+  print: function(index, stream, cb) {
+
+    var device = settings.devices[index];
+    if(!device) return cb(new Error("No device with index: " + index));
+    if(!device.type.match(/Printer$/)) return cb(new Error("This device is not a printer"));
+
     tmp.tmpName(function(err, path) {
       if(err) return cb(err);
       var out = fs.createWriteStream(path);
@@ -102,7 +124,7 @@ var clientRPC = {
       });
       
       out.on('finish', function() {
-        printLabel(path, function(err) {
+        printLabel(device, path, function(err) {
           fs.unlink(path);
           cb(err);
         });
@@ -219,6 +241,21 @@ function disconnect(conn) {
   }
 }
 
+function initDevices(remote) {
+  var i, device;
+  for(i=0; i < settings.devices.length; i++) {
+    device = settings.devices[i];
+    if(device.type === 'webcamScanner' && remote.reportScan) {
+      webcamScanStart(remote);
+      return;
+    }
+    if(device.type === 'keyboardScanner') {
+      keyboardScanStart(remote);
+      return;
+    }
+  }
+}
+
 function connect() {
   console.log("Connecting to: "+settings.hostname+":"+settings.port);
 
@@ -261,16 +298,7 @@ function connect() {
       });
 
       client.pipe(stream).pipe(client);
-      client.on('methods', function(remote) {
-        if(settings.deviceType === 'webcamScanner' && remote.reportScan) {
-          webcamScanStart(remote);
-          return;
-        }
-        if(settings.deviceType === 'keyboardScanner') {
-          keyboardScanStart(remote);
-          return;
-        }
-      });
+      client.on('methods', initDevices);
     });
   });
   

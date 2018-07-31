@@ -1,5 +1,5 @@
 {
-  "name": "bionet-labelprinter",
+  "name": "bionet-labdevice",
   "version": "0.0.1",
   "dependencies": {
     "minimist": "^1.2.0",
