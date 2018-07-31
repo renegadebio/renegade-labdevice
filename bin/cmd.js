@@ -64,6 +64,7 @@ function getNodeID() {
 var nodeID = getNodeID();
 
 function printLabel(device, path, cb) {
+
   console.log("On device '"+device.name+"' printing:", path);
 
   var cmd;
@@ -71,11 +72,15 @@ function printLabel(device, path, cb) {
   if(device.type === 'qlPrinter') {
     cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " '" + path + "'";
   } else if(device.type === 'dymoPrinter') {
-    cmd = "lpr -P '"+device.device+"' -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 '"+path+"'"
+    cmd = "lpr -P '"+device.device+"' '"+path+"'"
   }
+  debug(cmd);
 
   childProcess.exec(cmd, function(err, stdout, stderr) {
     if(err) return cb(err);
+    console.log("AAA", stdout, stderr);
+    debug(stdout);
+    debug(stderr);
     cb();
   });
 }
@@ -102,10 +107,23 @@ var clientRPC = {
   },
 
 
-  print: function(index, stream, cb) {
+  print: function(indexOrType, stream, cb) {
+    var device;
 
-    var device = settings.devices[index];
-    if(!device) return cb(new Error("No device with index: " + index));
+    if(typeof indexOrType === 'string') {
+      var i;
+      for(i=0; i < settings.devices.length; i++) {
+        if(settings.devices[i].type === indexOrType) {
+          device = settings.devices[i];
+          break;
+        }
+      }
+
+      if(!device) return cb(new Error("No printer device of specified type found."));
+    } else {
+      device = settings.devices[index];
+      if(!device) return cb(new Error("No device with index: " + index));
+    }
     if(!device.type.match(/Printer$/)) return cb(new Error("This device is not a printer"));
 
     tmp.tmpName(function(err, path) {

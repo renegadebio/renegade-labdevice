@@ -18,7 +18,11 @@ Connections are made using [ssh2](https://github.com/mscdex/ssh2).
 * Any USB scanner that shows up as a USB keyboard (e.g. Kercan KR-201)
 * Any USB scanner that shows up as a webcam (e.g. SUMLUNG scanners from ebay/aliexpress)
 
-# Supported label printers
+# Supported shipping label printers
+
+* Dymo LabelWriter 4XL
+
+# Supported QR-code label printers
 
 * Brother QL-570
 * Brother QL-700
