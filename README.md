@@ -1,5 +1,5 @@
 
-A small node app that is meant to run on a single-board computer and securely connects a physical lab device to a remote bionet node. Currently only 2D barcode label scanners and printers are supported.
+A small node app that is meant to run on a single-board computer and securely connects a physical lab device to a remote renegade-lims node. Currently only 2D barcode label scanners and printers are supported.
 
 Specifically, the following device-types are supported:
 
@@ -7,9 +7,9 @@ Specifically, the following device-types are supported:
 * Plain USB webcams (for scanning DataMatrix codes only)
 * USB thermal label printers (Brother QL-570 or QL-700)
 
-For printers this allows printing from the bionet web app to in-lab thermal printers. 
+For printers this allows printing from the renegade-lims web app to in-lab thermal printers. 
 
-For scanners this makes it possible to show scan results in the bionet web app when scanning on in-lab barcode scanners.
+For scanners this makes it possible to show scan results in the renegade-lims web app when scanning on in-lab barcode scanners.
 
 Connections are made using [ssh2](https://github.com/mscdex/ssh2).
 
@@ -49,13 +49,13 @@ Now clone this repository into the user's homedir:
 
 ```
 cd ~/
-git clone https://github.com/biobricks/bionet-labdevice
+git clone https://github.com/Juul/renegade-labdevice
 ```
 
 To install the node dependencies do:
 
 ```
-cd bionet-labdevice/
+cd renegade-labdevice/
 npm install
 ```
 
@@ -64,7 +64,7 @@ npm install
 For bluetooth support install:
 
 ```
-sudo apt install bluetooth bluez libbluetooth-dev libudev-dev libcap2-bin
+sudo apt install bluetooth bluez libbluetooth-dev libusb-dev libudev-dev libcap2-bin
 ```
 
 Then grant your node.js binary the `cap_net_raw` privilege to allow it to control the bluetooth chip without being run as root. As the user that will be running this program, run:
@@ -114,7 +114,7 @@ sudo apt install build-essential git gcc-4.8 g++-4.8 libusb-1.0-0 libusb-1.0-0-d
 # Generate key pair
 
 ```
-cd /home/bionet/bionet-labdevice # ensure you are in the app directory
+cd /home/renegade/renegade-labdevice # ensure you are in the app directory
 ssh-keygen -t rsa -f mykey -N ""
 ```
 
@@ -153,14 +153,14 @@ npm start
 
 # Testing
 
-For printers you can test this client using `bin/print_server_test.js` from the [main bionet app](https://github.com/biobricks/bionet). 
+For printers you can test this client using `bin/print_server_test.js` from the [bionet app](https://github.com/biobricks/bionet). 
 
 # Setting up for production
 
-The bionet-labdevice software should be installed under a non-root user account, so as root add a user account, e.g:
+The renegade-labdevice software should be installed under a non-root user account, so as root add a user account, e.g:
 
 ```
-adduser bionet
+adduser renegade
 ```
 
 Then log in as that user, ensure you are in the user's homedir and follow the instructions at the top of the README for installing this application and its dependencies. 
@@ -176,23 +176,23 @@ npm install -g psy
 Then as root:
 
 ```
-sudo cp production/bionet-labdevice.initd /etc/init.d/bionet-labdevice
-chmod 755 /etc/init.d/bionet-labdevice
+sudo cp production/renegade-labdevice.initd /etc/init.d/renegade-labdevice
+chmod 755 /etc/init.d/renegade-labdevice
 ```
 
-If you used a different username than `bionet` then you'll need to change the `runAsUser` line in the init.d file.
+If you used a different username than `renegade` then you'll need to change the `runAsUser` line in the init.d file.
 
 Test that it works. As root do:
 
 ```
 systemctl daemon-reload # only if using systemd
-/etc/init.d/bionet-labdevice start
+/etc/init.d/renegade-labdevice start
 ```
 
 If it's working make it auto-start on reboot:
 
 ```
-update-rc.d bionet-labdevice defaults
+update-rc.d renegade-labdevice defaults
 ```
 
 # ToDo
@@ -206,5 +206,7 @@ update-rc.d bionet-labdevice defaults
 
 License is GPLv3
 
-* Copyright 2016, 2017, 2018 BioBricks Foundation 
+* Copyright 2020 Marc Juul Christoffersen
+* Copyright 2016, 2017, 2018 BioBricks Foundation
+
 
