@@ -4,7 +4,7 @@ var path = require('path');
 module.exports = {
 
   // name of this labdevice server
-  name: "EndyLab Lab-device Server 1",
+  name: "Dexter's laboratory labdevice server 0",
 
   devices: [{
     // The device (scanner or printer) name
