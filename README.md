@@ -64,7 +64,7 @@ npm install
 For bluetooth support install:
 
 ```
-sudo apt install bluetooth bluez libbluetooth-dev libusb-dev libudev-dev libcap2-bin
+sudo apt install bluetooth bluez libbluetooth-dev libudev-dev libcap2-bin
 ```
 
 Then grant your node.js binary the `cap_net_raw` privilege to allow it to control the bluetooth chip without being run as root. As the user that will be running this program, run:
@@ -108,7 +108,7 @@ The `streamer` utility captures single frames from the webcam. `dmtx-utils` prov
 If you're using this with a USB barcode scanner that pretends to be a USB keyboard (most hand-held type USB barcode scanners are like this) then you might need:
 
 ```
-sudo apt install build-essential git gcc-4.8 g++-4.8 libusb-1.0-0 libusb-1.0-0-dev
+sudo apt install build-essential git libusb-1.0-0 libusb-1.0-0-dev
 ```
 
 # Generate key pair
