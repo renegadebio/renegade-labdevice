@@ -61,6 +61,8 @@ npm install
 
 ## bluetooth dependencies
 
+WARNING: Bluetooth is currently disabled by default due to incompatibilities between the latest version of the `noble` npm module and current LTS node.js. To even attempt to use it you will have to `npm install noble` first.
+
 For bluetooth support install:
 
 ```
