@@ -1,23 +1,23 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:          bionet-labdevice
+# Provides:          renegade-labdevice
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: psy running bionet-labdevice
-# Description:       psy running bionet-labdevice
+# Short-Description: psy running renegade-labdevice
+# Description:       psy running renegade-labdevice
 ### END INIT INFO
 #
 
 # Source function library.
 . /lib/lsb/init-functions
 
-runAsUser="bionet"
-appName="bionet-labdevice"
-workingDir="/home/${runAsUser}/bionet-labdevice"
-logFile="/home/${runAsUser}/bionet-labdevice.log"
+runAsUser="renegade"
+appName="renegade-labdevice"
+workingDir="/home/${runAsUser}/renegade-labdevice"
+logFile="/home/${runAsUser}/renegade-labdevice.log"
 nodeCommand="node"
 nodeApp="${workingDir}/bin/cmd.js"
 runnerApp="psy"
