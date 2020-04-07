@@ -2,6 +2,7 @@
   "name": "renegade-labdevice",
   "version": "0.0.1",
   "dependencies": {
+    "backoff": "^2.5.0",
     "minimist": "^1.2.0",
     "ndjson": "^1.4.3",
     "rpc-multistream": "^0.9.7",

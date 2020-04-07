@@ -2,20 +2,20 @@
 
 const tls = require('tls');
 const net = require('net');
+const fs = require('fs');
+const path = require('path');
+const childProcess = require('child_process');
+const minimist = require('minimist');
+const backoff = require('backoff');
+const ndjson = require('ndjson');
+const tmp = require('tmp');
+const uuid = require('uuid').v4;
+const rpc = require('rpc-multistream');
+var HID; // included on demand
 
-var fs = require('fs');
-var path = require('path');
-var childProcess = require('child_process');
-var HID;
-var minimist = require('minimist');
-var ndjson = require('ndjson');
-var tmp = require('tmp');
-var uuid = require('uuid').v4;
-var rpc = require('rpc-multistream');
+const scancodeDecode = require('../scancode_decode.js');
 
-var scancodeDecode = require('../scancode_decode.js');
-
-var argv = minimist(process.argv.slice(2), {
+const argv = minimist(process.argv.slice(2), {
   alias: {
     D: 'debug',
     p: 'port',
@@ -31,7 +31,7 @@ default: {
 }
 });
 
-var settings = require('../settings.js');
+const settings = require('../settings.js');
 settings.hostname = argv.hostname || settings.hostname;
 settings.port = argv.port || settings.port;
 settings.device = argv.device || settings.device;
@@ -254,8 +254,8 @@ function keyboardScanStop() {
   hidScanner.close();
 }
 
-function disconnect(conn) {
-  conn.end();
+function disconnect() {
+  
   if(settings.deviceType === 'webcamScanner') {
     webcamScanStop();
     return;
@@ -281,34 +281,34 @@ function initDevices(remote) {
   }
 }
 
-function connect() {
+
+function connectOnce(host, port, cb) {
   console.log("Connecting to: "+settings.host+":"+settings.port);
 
-  var socket = tls.connect(settings.port, settings.host, {
+  var socket = tls.connect(port, host, {
     ca: settings.serverTLSCert, // only trust this cert
     key: settings.tlsKey,
     cert: settings.tlsCert
   })
  
   socket.on('secureConnect', function() {
-
+    cb();
+    
     console.log("Connected!");
-
-
-    var client = rpc(clientRPC, {
+    const client = rpc(clientRPC, {
       heartbeat: settings.heartbeatRate, // send heartbeat every 3000 ms
       maxMissedBeats: 3.5 // die after 3.5 times the above timeout
     });
-
+    
     // if heartbeat fails
     client.on('death', function() {
-        disconnect(conn);
       debug("heartbeat timeout. disconnecting");
       debug("will attempt reconnect in 3 seconds");
-      setTimeout(connect, 3000);
+      socket.end();
     });
     
     client.pipe(socket).pipe(client);
+    
     client.on('methods', initDevices);
   });
   
@@ -316,14 +316,51 @@ function connect() {
   socket.on('error', function(err) {
     console.error("Connection error:", err);
 
-    console.log("Attempting reconnect in 10 seconds");
-    setTimeout(connect, 10 * 1000);
   });
 
   socket.on('close', function() {
+    cb(true);
     console.log("socket closed");
   });
   
 }
 
-connect();
+function connect(host, port) {
+
+  // Retry with increasing back-off 
+  var back = backoff.fibonacci({
+    randomisationFactor: 0,
+    initialDelay: 3 * 1000, // 3 seconds
+    maxDelay: 30 * 1000
+  });
+
+  var count = 0;
+  function tryConnect() {
+    connectOnce(host, port, function(disconnected) {
+      if(disconnected) {
+        if(count > 0) {
+          back.backoff();
+          return;
+        }
+        process.nextTick(tryConnect);
+        count++;
+      } else {
+        count = 0;
+        back.reset();
+      }
+    });
+  }
+  
+  tryConnect();
+  
+  back.on('backoff', function(number, delay) {
+    console.log("Retrying in", Math.round(delay / 1000), "seconds");  
+  });
+
+  back.on('ready', function(number, delay) {
+    tryConnect();
+  });  
+}
+
+
+connect(settings.host, settings.port);
