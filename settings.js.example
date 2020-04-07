@@ -1,4 +1,4 @@
-
+var fs = require('fs');
 var path = require('path');
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
     // Used to identify this device on servers with multiple devices
     // It is a good idea to include the physical location in this name
     // MUST NOT CONTAIN SINGLE QUOTES (')
-    name: "Dymo LabelWriter 4XL - NW Corner",
+    name: "My lab's QL-700",
 
     // The device identifier
     // qlPrinter is likely: /dev/usb/lp0
@@ -27,7 +27,7 @@ module.exports = {
     // 'dymoPrinter'
     // 'webcamScanner'
     // 'keyboardScanner'
-    type: 'dymoPrinter',
+    type: 'qlPrinter',
 
     // The print command. Only relevant for printers.
     // For the 'qlPrinter' type this should be the path ql570 command,
@@ -44,20 +44,16 @@ module.exports = {
   }],
 
   // The bionet node's host name to which you wish to connect
-  hostname: "localhost",
+  host: "localhost",
   port: 4200,
 
   // Enable debug output
   debug: false,
-
-  // SHA1 hash of hosts public key
-  hosthash: "sha1-of-hosts-pubkey",
-
-  // ssh username
-  username: "myprinter",
-
+  
   // Path to ssh private key to use for authentication
-  privkey: path.join(__dirname, 'mykey'),
+  tlsKey: fs.readFileSync('tls/client-key.pem'),
+  tlsCert: fs.readFileSync('tls/client-cert.pem'),
+  serverTLSCert: fs.readFileSync('tls/server-cert.pem'),
 
   // How often to check if the server is still there
   heartbeatRate: 3000 // in ms

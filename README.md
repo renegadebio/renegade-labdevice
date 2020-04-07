@@ -1,17 +1,14 @@
 
-A small node app that is meant to run on a single-board computer and securely connects a physical lab device to a remote renegade-lims node. Currently only 2D barcode label scanners and printers are supported.
+A small node app that is meant to run on a single-board computer and securely connects a physical lab device to a remote renegade-lims node (which could be physically in the lab or not).
 
 Specifically, the following device-types are supported:
 
-* USB barcode scanners that show up as a keyboard
 * Plain USB webcams (for scanning DataMatrix codes only)
-* USB thermal label printers (Brother QL-570 or QL-700)
+* USB thermal label printers
 
 For printers this allows printing from the renegade-lims web app to in-lab thermal printers. 
 
 For scanners this makes it possible to show scan results in the renegade-lims web app when scanning on in-lab barcode scanners.
-
-Connections are made using [ssh2](https://github.com/mscdex/ssh2).
 
 # Supported barcode scanners
 
@@ -42,7 +39,7 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | b
 Log out, then log back in, then use nvm to install node:
 
 ```
-nvm install 6.10 # or whatever the latest LTS release of node is
+nvm install --lts
 ```
 
 Now clone this repository into the user's homedir:
@@ -69,13 +66,19 @@ For bluetooth support install:
 sudo apt install bluetooth bluez libbluetooth-dev libudev-dev libcap2-bin
 ```
 
+Then in this directory:
+
+```
+npm install noble
+```
+
 Then grant your node.js binary the `cap_net_raw` privilege to allow it to control the bluetooth chip without being run as root. As the user that will be running this program, run:
 
 ```
 which node
 ```
 
-and ctrl-c the output.
+and copy the output.
 
 Then as root run:
 
@@ -107,17 +110,16 @@ The `streamer` utility captures single frames from the webcam. `dmtx-utils` prov
 
 ## HID/keyboard scanner dependencies
 
-If you're using this with a USB barcode scanner that pretends to be a USB keyboard (most hand-held type USB barcode scanners are like this) then you might need:
+If you're using this with a USB barcode scanner that pretends to be a USB keyboard (most hand-held type USB barcode scanners are like this) then you will need:
 
 ```
 sudo apt install build-essential git libusb-1.0-0 libusb-1.0-0-dev
 ```
 
-# Generate key pair
+and you will need to manually install the npm `node-hid` package by running this command from within this directory:
 
 ```
-cd /home/renegade/renegade-labdevice # ensure you are in the app directory
-ssh-keygen -t rsa -f mykey -N ""
+npm install node-hid
 ```
 
 # Setup
@@ -128,9 +130,15 @@ Copy the examples settings file:
 cp settings.js.example settings.js
 ```
 
-and edit to taste. 
+## TLS certificates
 
-You get the correct `hosthash` by running this with the wrong hosthash and the correct `hostname` and `port`.
+```
+./scripts/gen_cert.sh
+```
+
+Now copy the server's cert to `tls/server-cert.pem` and copy `tls/client-cert.pem` to the appropriate place on the server.
+
+and edit to taste. 
 
 # Permissions
 

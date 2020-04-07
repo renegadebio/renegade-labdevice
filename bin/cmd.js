@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
+const tls = require('tls');
+const net = require('net');
+
 var fs = require('fs');
 var path = require('path');
 var childProcess = require('child_process');
-var HID = require('node-hid');
-var ssh2 = require('ssh2');
+var HID;
 var minimist = require('minimist');
 var ndjson = require('ndjson');
 var tmp = require('tmp');
@@ -74,6 +76,7 @@ function printLabel(device, path, cb) {
   } else if(device.type === 'dymoPrinter') {
     cmd = "lpr -P '"+device.device+"' '"+path+"'"
   }
+  
   debug(cmd);
 
   childProcess.exec(cmd, function(err, stdout, stderr) {
@@ -199,6 +202,10 @@ var hidScanner;
 
 function keyboardScanStart(remote) {
   try {
+    if(!HID) {
+      HID = require('node-hid');
+    }
+    
     var parts = settings.device.split(':');
     var dev = new HID.HID(parseInt(parts[0], 16), parseInt(parts[1], 16));
     hidScanner = dev;
@@ -275,59 +282,48 @@ function initDevices(remote) {
 }
 
 function connect() {
-  console.log("Connecting to: "+settings.hostname+":"+settings.port);
+  console.log("Connecting to: "+settings.host+":"+settings.port);
 
-  conn = new ssh2.Client();
-  conn.connect({
-    host: settings.hostname,
-    port: settings.port,
-    username: settings.username,
-    privateKey: fs.readFileSync(settings.privkey),
-    hostHash: 'sha1',
-    hostVerifier: function(hashedKey) {
-      if(hashedKey === settings.hosthash) {
-        return true;
-      }
-      console.log("Untrusted host key!");
-      console.log("If you want to trust this host, set settings.hosthash to:");
-      console.log("  "+hashedKey);
-      console.log("");
-      return false;
-    }
-  });
+  var socket = tls.connect(settings.port, settings.host, {
+    ca: settings.serverTLSCert, // only trust this cert
+    key: settings.tlsKey,
+    cert: settings.tlsCert
+  })
+ 
+  socket.on('secureConnect', function() {
 
-  conn.on('ready', function() {
     console.log("Connected!");
 
-    conn.exec('stream', function(err, stream) {
-      if(err) return console.error(err);
 
-      var client = rpc(clientRPC, {
-        heartbeat: settings.heartbeatRate, // send heartbeat every 3000 ms
-        maxMissedBeats: 3.5 // die after 3.5 times the above timeout
-      });
-
-      // if heartbeat fails
-      client.on('death', function() {
-        disconnect(conn);
-        debug("heartbeat timeout. disconnecting");
-        debug("will attempt reconnect in 3 seconds");
-        setTimeout(connect, 3000);
-      });
-
-      client.pipe(stream).pipe(client);
-      client.on('methods', initDevices);
+    var client = rpc(clientRPC, {
+      heartbeat: settings.heartbeatRate, // send heartbeat every 3000 ms
+      maxMissedBeats: 3.5 // die after 3.5 times the above timeout
     });
+
+    // if heartbeat fails
+    client.on('death', function() {
+        disconnect(conn);
+      debug("heartbeat timeout. disconnecting");
+      debug("will attempt reconnect in 3 seconds");
+      setTimeout(connect, 3000);
+    });
+    
+    client.pipe(socket).pipe(client);
+    client.on('methods', initDevices);
   });
   
 
-  conn.on('error', function(err) {
+  socket.on('error', function(err) {
     console.error("Connection error:", err);
 
     console.log("Attempting reconnect in 10 seconds");
     setTimeout(connect, 10 * 1000);
   });
 
+  socket.on('close', function() {
+    console.log("socket closed");
+  });
+  
 }
 
 connect();
