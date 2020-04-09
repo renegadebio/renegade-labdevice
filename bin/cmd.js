@@ -79,9 +79,8 @@ function printLabel(device, path, cb) {
   
   debug(cmd);
 
-  childProcess.exec(cmd, function(err, stdout, stderr) {
+  childProcess.exec(cmd, {}, function(err, stdout, stderr) {
     if(err) return cb(err);
-    console.log("AAA", stdout, stderr);
     debug(stdout);
     debug(stderr);
     cb();
@@ -112,7 +111,7 @@ var clientRPC = {
 
   print: function(indexOrType, streamOrBuffer, cb) {
     var device;
-
+    
     if(typeof indexOrType === 'string') {
       var i;
       for(i=0; i < settings.devices.length; i++) {
@@ -124,32 +123,39 @@ var clientRPC = {
 
       if(!device) return cb(new Error("No printer device of specified type found."));
     } else {
-      device = settings.devices[index];
-      if(!device) return cb(new Error("No device with index: " + index));
+      device = settings.devices[indexOrType];
+      if(!device) return cb(new Error("No device with index: " + indexOrType));
     }
     if(!device.type.match(/Printer$/)) return cb(new Error("This device is not a printer"));
 
     tmp.tmpName(function(err, path) {
       if(err) return cb(err);
 
+      var out;
+      
       function fileWritten() {
         printLabel(device, path, function(err) {
-          fs.unlink(path);
-          cb(err);
+          if(err) console.error(err);
+          fs.unlink(path, cb);
         });
       }
 
       function fileWriteError(err) {
         console.error("error writing temporary file:", err);
-        out.close();
-        fs.unlink(path);
-        cb(err);
+        if(out) {
+          out.close();
+        }
+        fs.unlink(path, cb);
       }
       
       debug("opened temporary file: " + path);
 
+      if(streamOrBuffer.type === 'Buffer' && streamOrBuffer.data) {
+        streamOrBuffer = Buffer.from(streamOrBuffer.data);
+      }
+      
       // If we got a buffer
-      if(streamOrBuffer instanceof 'Buffer') {
+      if(streamOrBuffer instanceof Buffer) {
         fs.writeFile(path, streamOrBuffer, function(err) {
           if(err) return fileWriteError(err);
           fileWritten();
