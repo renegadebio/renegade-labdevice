@@ -110,7 +110,7 @@ var clientRPC = {
   },
 
 
-  print: function(indexOrType, stream, cb) {
+  print: function(indexOrType, streamOrBuffer, cb) {
     var device;
 
     if(typeof indexOrType === 'string') {
@@ -131,28 +131,40 @@ var clientRPC = {
 
     tmp.tmpName(function(err, path) {
       if(err) return cb(err);
-      var out = fs.createWriteStream(path);
 
-      stream.pipe(out);
-
-      debug("opened temporary file: " + path);
-
-      out.on('error', function(err) {
-        console.error("error writing temporary file:", err);
-        out.close();
-        fs.unlink(path);
-        cb(err);
-      });
-      
-      out.on('finish', function() {
+      function fileWritten() {
         printLabel(device, path, function(err) {
           fs.unlink(path);
           cb(err);
         });
-      });
+      }
+
+      function fileWriteError(err) {
+        console.error("error writing temporary file:", err);
+        out.close();
+        fs.unlink(path);
+        cb(err);
+      }
+      
+      debug("opened temporary file: " + path);
+
+      // If we got a buffer
+      if(streamOrBuffer instanceof 'Buffer') {
+        fs.writeFile(path, streamOrBuffer, function(err) {
+          if(err) return fileWriteError(err);
+          fileWritten();
+        });
+      } else { // If we got a stream
+        var out = fs.createWriteStream(path);
+        out.on('error', fileWriteError);
+        out.on('finish', fileWritten);
+        streamOrBuffer.pipe(out);
+      }
+
     });
   }
 };
+
 
 var webcamScanning = false;
 
@@ -333,7 +345,7 @@ function connect(host, port) {
     initialDelay: 3 * 1000, // 3 seconds
     maxDelay: 30 * 1000
   });
-
+  
   var count = 0;
   function tryConnect() {
     connectOnce(host, port, function(disconnected) {
