@@ -136,6 +136,8 @@ cp settings.js.example settings.js
 ./scripts/gen_cert.sh
 ```
 
+If you are using this locally on the same machine as `renegade-lims` then the hostname should probably just be `localhost`.
+
 Now copy the server's cert to `tls/server-cert.pem` and copy `tls/client-cert.pem` to the appropriate place on the server.
 
 and edit to taste. 
