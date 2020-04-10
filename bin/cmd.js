@@ -301,7 +301,7 @@ function initDevices(remote) {
 
 
 function connectOnce(host, port, cb) {
-  console.log("Connecting to: "+settings.host+":"+settings.port);
+  console.log("Connecting to: "+host+":"+port);
 
   var socket = tls.connect(port, host, {
     ca: settings.serverTLSCert, // only trust this cert
