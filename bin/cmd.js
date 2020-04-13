@@ -65,7 +65,7 @@ function getNodeID() {
 
 var nodeID = getNodeID();
 
-function printLabel(device, path, cb) {
+function printLabel(device, path, copies, cb) {
 
   console.log("On device '"+device.name+"' printing:", path);
 
@@ -83,7 +83,9 @@ function printLabel(device, path, cb) {
     if(err) return cb(err);
     debug(stdout);
     debug(stderr);
-    cb();
+    if(--copies) {
+      printLabel(device, path, copies, cb);
+    }
   });
 }
 
@@ -109,7 +111,7 @@ var clientRPC = {
   },
 
 
-  print: function(indexOrType, streamOrBuffer, cb) {
+  print: function(indexOrType, streamOrBuffer, copies, cb) {
     var device;
     
     if(typeof indexOrType === 'string') {
@@ -134,7 +136,7 @@ var clientRPC = {
       var out;
       
       function fileWritten() {
-        printLabel(device, path, function(err) {
+        printLabel(device, path, copies || 1, function(err) {
           if(err) console.error(err);
           fs.unlink(path, cb);
         });

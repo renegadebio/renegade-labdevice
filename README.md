@@ -209,7 +209,7 @@ update-rc.d renegade-labdevice defaults
 
 # ToDo
 
-* Start as root, read private key, then drop permissions
+* Implement buffer to avoid folks printing too fast
 * Report [USB connection status](https://unix.stackexchange.com/questions/216223/how-to-make-cups-show-a-usb-printer-as-disabled-when-it-is-disconnected)
 * Hook BLE scanning into the RPC system
 * Implement remote software update
