@@ -54,38 +54,6 @@ cd renegade-labdevice/
 npm install
 ```
 
-## bluetooth dependencies
-
-WARNING: Bluetooth is currently disabled by default due to incompatibilities between the latest version of the `noble` npm module and current LTS node.js. To even attempt to use it you will have to `npm install noble` first.
-
-For bluetooth support install:
-
-```
-sudo apt install bluetooth bluez libbluetooth-dev libudev-dev libcap2-bin
-```
-
-Then in this directory:
-
-```
-npm install noble
-```
-
-Then grant your node.js binary the `cap_net_raw` privilege to allow it to control the bluetooth chip without being run as root. As the user that will be running this program, run:
-
-```
-which node
-```
-
-and copy the output.
-
-Then as root run:
-
-```
-setcap cap_net_raw+eip $(eval readlink -f <node_path>)
-```
-
-where `<node_path>` is the output from the `which node` command.
-
 ## printer driver dependencies
 
 If you're using this with a printer install the C program that talks to the printer, fetch the ql-printer-driver repository:
@@ -176,6 +144,36 @@ You can run in insecure mode, where it won't bother validating the server certif
 # Testing
 
 For printers you can test this client using `bin/print_server_test.js` from the [bionet app](https://github.com/biobricks/bionet). 
+
+# Printing multiple copies
+
+It seems that printing multiple copies is currently broken in the DYMO driver (or at least I couldn't get it to work). Setting `supportsCopies: false` in `settings.js` is a workaround but that puts a 3-4 second pause between each printed copy.
+
+A better fix is to edit your printer's `.ppd` file (after you've installed the printer) which is probably in a path like:
+
+```
+/etc/cups/ppd/DYMO-LabelWriter-450-Turbo.ppd
+```
+
+and change the line:
+
+```
+*cupsManualCopies: False
+```
+
+to:
+
+```
+*cupsManualCopies: True
+```
+
+Then restart CUPS:
+
+```
+sudo systemctl restart cups
+```
+
+Now you can set `supportsCopies: true` in `settings.js`.
 
 # Useful CUPS commands
 

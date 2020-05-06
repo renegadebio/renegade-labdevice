@@ -75,10 +75,18 @@ function printLabel(device, path, copies, cb) {
 
   if(device.type === 'qlPrinter') {
     cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " " + (device.args || '') + " '" + path + "'";
+    
+    if(device.supportsCopies) {
+      device.supportsCopies = false;
+    }
+
   } else if(device.type === 'dymoPrinter') {
 
-    cmd = (device.cmd || 'lpr') + " -P '"+device.device+"' "+(device.args || '')+" '"+path+"'"
-    console.log("cmd:", cmd);
+    var args = (device.args || '');
+    if(device.supportsCopies) {
+      args += ' -# '+copies;
+    }
+    cmd = (device.cmd || 'lpr') + " -P '"+device.device+"' "+args+" '"+path+"'"
   }
   
   debug(cmd);
@@ -87,7 +95,7 @@ function printLabel(device, path, copies, cb) {
     if(err) return cb(err);
     debug(stdout);
     debug(stderr);
-    if(--copies) {
+    if(!device.supportsCopies && --copies) {
       printLabel(device, path, copies, cb);
     }
   });

@@ -43,14 +43,22 @@ module.exports = {
     // Only relevant for type: 'qlPrinter'
     // The paper type. 'n' for narrow paper or 'w' for wide paper
     // Default: 'n'
-    paperType: 'n'
+    paperType: 'n',
+
+
+    // For DYMO printers, set this to true if your driver
+    // support sending the number of copies with lpr, e.g:
+    // lpr -# 3
+    // If this is false then copies will be sent as individual print jobs
+    supportsCopies: false
   }, {
   
     name: "My lab's LabelWriter 450 Turbo",
     device: 'DYMO-LabelWriter-450-Turbo',
     type: 'dymoPrinter',
     cmd: "lpr",
-    args: "-o media=Custom.20x39mm"
+    args: "-o media=Custom.20x39mm",
+    supportsCopies: true
     
   }],
 
