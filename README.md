@@ -161,6 +161,18 @@ Then run:
 npm start
 ```
 
+or
+
+```
+./bin/cmd.js
+```
+
+You can run in insecure mode, where it won't bother validating the server certificate, using:
+
+```
+./bin/cmd.js --insecure
+```
+
 # Testing
 
 For printers you can test this client using `bin/print_server_test.js` from the [bionet app](https://github.com/biobricks/bionet). 

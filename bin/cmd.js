@@ -65,7 +65,10 @@ function getNodeID() {
 var nodeID = getNodeID();
 
 function printLabel(device, path, copies, cb) {
-
+  copies = parseInt(copies);
+  if(!copies || copies < 1 || copies > 20) {
+    return cb(new Error("Invalid or disallowed number of copies"));
+  }
   console.log("On device '"+device.name+"' printing:", path);
 
   var cmd;
@@ -73,7 +76,9 @@ function printLabel(device, path, copies, cb) {
   if(device.type === 'qlPrinter') {
     cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " " + (device.args || '') + " '" + path + "'";
   } else if(device.type === 'dymoPrinter') {
+
     cmd = (device.cmd || 'lpr') + " -P '"+device.device+"' "+(device.args || '')+" '"+path+"'"
+    console.log("cmd:", cmd);
   }
   
   debug(cmd);
