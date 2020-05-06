@@ -21,7 +21,7 @@ const argv = minimist(process.argv.slice(2), {
     p: 'port',
     h: 'host',
     d: 'device',
-    p: 'pubkey',
+    i: 'insecure',
     c: 'cmd'
   },
   boolean: [
@@ -35,7 +35,6 @@ const settings = require('../settings.js');
 settings.hostname = argv.hostname || settings.hostname;
 settings.port = argv.port || settings.port;
 settings.device = argv.device || settings.device;
-settings.pubkey = argv.pubkey || settings.pubkey;
 settings.cmd = argv.cmd || settings.cmd;
 settings.name = settings.name.replace(/^\w\d\.\-_]+/, '-');
 settings.debug = argv.debug || settings.debug;
@@ -72,9 +71,9 @@ function printLabel(device, path, copies, cb) {
   var cmd;
 
   if(device.type === 'qlPrinter') {
-    cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " '" + path + "'";
+    cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " " + (device.args || '') + " '" + path + "'";
   } else if(device.type === 'dymoPrinter') {
-    cmd = "lpr -P '"+device.device+"' '"+path+"'"
+    cmd = (device.cmd || 'lpr') + " -P '"+device.device+"' "+(device.args || '')+" '"+path+"'"
   }
   
   debug(cmd);
@@ -305,11 +304,17 @@ function initDevices(remote) {
 function connectOnce(host, port, cb) {
   console.log("Connecting to: "+host+":"+port);
 
-  var socket = tls.connect(port, host, {
+  var opts = {
     ca: settings.serverTLSCert, // only trust this cert
     key: settings.tlsKey,
     cert: settings.tlsCert
-  })
+  };
+
+  if(argv.insecure) {
+    opts.rejectUnauthorized = false;
+  }
+  
+  var socket = tls.connect(port, host, opts)
  
   socket.on('secureConnect', function() {
     cb();

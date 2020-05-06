@@ -13,14 +13,12 @@ For scanners this makes it possible to show scan results in the renegade-lims we
 # Supported barcode scanners
 
 * Any USB scanner that shows up as a USB keyboard (e.g. Kercan KR-201)
-* Any USB scanner that shows up as a webcam (e.g. SUMLUNG scanners from ebay/aliexpress)
+* Any USB scanner that shows up as a webcam (e.g. SUMLUNG scanners from alibaba)
 
-# Supported shipping label printers
+# Supported label printers
 
+* Dymo LabelWriter 450 Turbo
 * Dymo LabelWriter 4XL
-
-# Supported QR-code label printers
-
 * Brother QL-570
 * Brother QL-700
 
@@ -166,6 +164,50 @@ npm start
 # Testing
 
 For printers you can test this client using `bin/print_server_test.js` from the [bionet app](https://github.com/biobricks/bionet). 
+
+# Useful CUPS commands
+
+To list all installed printers:
+
+```
+lpstat -v
+```
+
+List available paper sizes and options:
+
+```
+lpoptions -d DYMO-LabelWriter-450-Turbo -l
+```
+
+Print with custom paper size:
+
+```
+lpr -P DYMO-LabelWriter-450-Turbo -o media=Custom.20x39mm examples/example.png
+```
+
+To list all currently connected USB printers (not limited to installed printers):
+
+```
+lpinfo -v|grep "usb://"
+```
+
+To install a printer do e.g.:
+
+```
+sudo lpadmin -p "LabelWriter-450-turbo" -E -v usb://DYMO/LabelWriter%20450%20Turbo?serial=13011612335742 -m lw450t.ppd
+```
+
+To list all printer drivers (for the `-m` argument in `lpadmin -p`):
+
+```
+lpinfo -m
+```
+
+To remove a printer then do e.g:
+
+```
+sudo lpadmin -x LabelWriter-450-turbo
+```
 
 # Setting up for production
 

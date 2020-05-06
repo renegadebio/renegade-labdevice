@@ -37,10 +37,21 @@ module.exports = {
     // Default for dymoPrinter: 'lpr'
     cmd: "ql570",
 
+    // Additional command arguments (optional)
+    args: '',
+
     // Only relevant for type: 'qlPrinter'
     // The paper type. 'n' for narrow paper or 'w' for wide paper
     // Default: 'n'
     paperType: 'n'
+  }, {
+  
+    name: "My lab's LabelWriter 450 Turbo",
+    device: 'DYMO-LabelWriter-450-Turbo',
+    type: 'dymoPrinter',
+    cmd: "lpr",
+    args: "-o media=Custom.20x39mm"
+    
   }],
 
   // The bionet node's host name to which you wish to connect
