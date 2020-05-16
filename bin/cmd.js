@@ -6,12 +6,13 @@ const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
 const minimist = require('minimist');
-const backoff = require('backoff');
 const ndjson = require('ndjson');
 const tmp = require('tmp');
 const uuid = require('uuid').v4;
 const rpc = require('rpc-multistream');
 var HID; // included on demand
+
+const limsConnector = require('renegade-lims-connector');
 
 const scancodeDecode = require('../scancode_decode.js');
 
@@ -21,11 +22,12 @@ const argv = minimist(process.argv.slice(2), {
     p: 'port',
     h: 'host',
     d: 'device',
-    i: 'insecure',
     c: 'cmd'
   },
   boolean: [
-    'debug'
+    'debug',
+    'insecure', // don't validate TLS certs
+    'keep' // don't delete temporary image files
   ],
 default: {
 }
@@ -148,9 +150,11 @@ var clientRPC = {
       var out;
       
       function fileWritten() {
-        printLabel(device, path, copies || 1, function(err) {
+        printLabel(device, path, copies || 1, (err) => {
           if(err) console.error(err);
-          fs.unlink(path, cb);
+          if(!argv.keep) {
+            fs.unlink(path, cb);
+          }
         });
       }
 
@@ -314,91 +318,19 @@ function initDevices(remote) {
 }
 
 
-function connectOnce(host, port, cb) {
-  console.log("Connecting to: "+host+":"+port);
-
-  var opts = {
-    ca: settings.serverTLSCert, // only trust this cert
-    key: settings.tlsKey,
-    cert: settings.tlsCert
-  };
-
-  if(argv.insecure) {
-    opts.rejectUnauthorized = false;
-  }
-  
-  var socket = tls.connect(port, host, opts)
- 
-  socket.on('secureConnect', function() {
-    cb();
-    
-    console.log("Connected!");
-    const client = rpc(clientRPC, {
-      heartbeat: settings.heartbeatRate, // send heartbeat every 3000 ms
-      maxMissedBeats: 3.5 // die after 3.5 times the above timeout
-    });
-    
-    // if heartbeat fails
-    client.on('death', function() {
-      debug("heartbeat timeout. disconnecting");
-      debug("will attempt reconnect in 3 seconds");
-      socket.end();
-    });
-    
-    client.pipe(socket).pipe(client);
-    
-    client.on('methods', initDevices);
-  });
-  
-
-  socket.on('error', function(err) {
-    console.error("Connection error:", err);
-
-  });
-
-  socket.on('close', function() {
-    cb(true);
-    console.log("socket closed");
-  });
-  
+settings.clientRPC = clientRPC;
+if(argv.insecure) {
+  settings.insecure = true;
+}
+if(argv.debug) {
+  settings.debug = true;
 }
 
-function connect(host, port) {
-
-  // Retry with increasing back-off 
-  var back = backoff.fibonacci({
-    randomisationFactor: 0,
-    initialDelay: 3 * 1000, // 3 seconds
-    maxDelay: 30 * 1000
-  });
-  
-  var count = 0;
-  function tryConnect() {
-    connectOnce(host, port, function(disconnected) {
-      if(disconnected) {
-        if(count > 0) {
-          back.backoff();
-          return;
-        }
-        process.nextTick(tryConnect);
-        count++;
-      } else {
-        count = 0;
-        back.reset();
-      }
-    });
+limsConnector(settings, function(err, remote) {
+  if(err) {
+    console.error(err);
+    process.exit(1);
   }
-  
-  tryConnect();
-  
-  back.on('backoff', function(number, delay) {
-    console.log("Retrying in", Math.round(delay / 1000), "seconds");  
-  });
 
-  back.on('ready', function(number, delay) {
-    tryConnect();
-  });  
-}
-
-
-connect(settings.host, settings.port);
+  initDevices(remote);
+});

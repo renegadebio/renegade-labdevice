@@ -259,6 +259,20 @@ If it's working make it auto-start on reboot:
 update-rc.d renegade-labdevice defaults
 ```
 
+# Notes on label sizes
+
+## Diversified BioTech WetGrip [GRDT-5000] (https://www.divbio.com/product/grdt-5000)
+
+These are 2.00" x 0.25" labels for 96-well plates. They turn black when exposed to 70% isopropanol (still need to test with ethanol).
+
+A 1020x440 pixel image printed with `lpr -o media=Custom.51x22mm` will have its sides and bottom aligned with the label. The top ~49 pixels will not be printed.
+
+## Diversified BioTech Xylene Resistant [RVTH-3000](https://www.divbio.com/product/rvth-3000)
+
+These are a bit large for normal 2 ml cryotubes but they can work. They are resistant (but not immune) to 70% ethanol. Much less so for 70% isopropanol.
+
+A 560x1083 pixel image printed with `lpr -o media=Custom.20x39mm` will fill the label.
+
 # ToDo
 
 * Implement buffer to avoid folks printing too fast
