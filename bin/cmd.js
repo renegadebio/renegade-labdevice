@@ -27,7 +27,8 @@ const argv = minimist(process.argv.slice(2), {
   boolean: [
     'debug',
     'insecure', // don't validate TLS certs
-    'keep' // don't delete temporary image files
+    'keep', // don't delete temporary image files
+    'pretend' // don't actually print
   ],
   default: {
   }
@@ -71,7 +72,10 @@ function printLabel(device, path, copies, cb) {
   if(!copies || copies < 1 || copies > 20) {
     return cb(new Error("Invalid or disallowed number of copies"));
   }
-  console.log("On device '"+device.name+"' printing:", path);
+  console.log("On device '"+device.name+"' printing", copies, "copies of:", path);
+  if(argv.pretend) {
+    return cb();
+  }
 
   var cmd;
 
