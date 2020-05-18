@@ -29,8 +29,8 @@ const argv = minimist(process.argv.slice(2), {
     'insecure', // don't validate TLS certs
     'keep' // don't delete temporary image files
   ],
-default: {
-}
+  default: {
+  }
 });
 
 const settings = require('../settings.js');
@@ -327,10 +327,12 @@ if(argv.debug) {
 }
 
 limsConnector(settings, function(err, remote) {
-  if(err) {
-    console.error(err);
-    process.exit(1);
+  if(remote) { // connected!
+    
+    initDevices(remote);
+    
+  } else { // disconnected (after having been connected)
+    // TODO uninitialize devices
+    console.log("Disconnected");
   }
-
-  initDevices(remote);
 });
