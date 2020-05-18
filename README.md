@@ -378,7 +378,7 @@ An example label is `diversified_biotech_tough_tags_RVTH-3000_medium_tube_labels
 
 # ToDo
 
-* Implement buffer to avoid folks printing too fast
+* Implement buffer for Brother labels to avoid folks printing too fast
 * Report [USB connection status](https://unix.stackexchange.com/questions/216223/how-to-make-cups-show-a-usb-printer-as-disabled-when-it-is-disconnected)
 * Hook BLE scanning into the RPC system
 * Implement remote software update

@@ -91,14 +91,20 @@ function printLabel(device, path, copies, cb) {
     cmd = (device.cmd || 'lpr') + " -P '"+device.device+"' "+args+" '"+path+"'"
   }
   
-  debug(cmd);
+  debug("Running command: " + cmd);
 
   childProcess.exec(cmd, {}, function(err, stdout, stderr) {
     if(err) return cb(err);
-    debug(stdout);
-    debug(stderr);
+    if(stdout) {
+      debug("command stdout: " + stdout);
+    }
+    if(stderr) {
+      debug("command stderr: " + stderr);
+    }
     if(!device.supportsCopies && --copies) {
       printLabel(device, path, copies, cb);
+    } else {
+      cb();
     }
   });
 }
@@ -150,10 +156,14 @@ var clientRPC = {
       var out;
       
       function fileWritten() {
+        debug("File was written: " + path);
         printLabel(device, path, copies || 1, (err) => {
           if(err) console.error(err);
           if(!argv.keep) {
+            debug("Deleting file: " + path);
             fs.unlink(path, cb);
+          } else {
+            cb();
           }
         });
       }
