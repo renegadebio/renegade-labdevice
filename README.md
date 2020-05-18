@@ -330,17 +330,51 @@ update-rc.d renegade-labdevice defaults
 
 # Notes on label sizes
 
+## Brother narrow labels
+
+These labels are 29 mm wide for narrow labels and 62 mm wide for wide labels and come as one continous label which is cut by the printer.
+
+The source image should be a monochrome (not greyscale) PNG of size 1083x336 for narrow labels. The length of the label is the width of the provided image. Note that anything shorter than a 1083 pixel wide image won't print. It should be fine to print labels longer than 1083.
+
+There are several versions of the narrow Brother labels:
+
+* DK-2211: Continous narrow film labels (more durable)
+* DK-2210: Continous narrow paper labels
+* DK-1201: Pre-cut white paper labels
+* DK-2212: Continous wide film labels
+* DK-2205: Continous wide paper labels
+
+The [ql-printer-driver](https://github.com/renegadebio/ql-printer-driver) is used to print these labels.
+
+The command for continous narrow labels is:
+
+```
+./ql_print /dev/usb/lp0 <label-type> label.png
+```
+
+Where `<label-type>` is:
+
+* n for continous narrow labels
+* 7 for pre-cut narrow labels
+* w for continous wide labels
+
+An example narrow label is `brother_ql_narrow.png`.
+
 ## Diversified BioTech WetGrip [GRDT-5000] (https://www.divbio.com/product/grdt-5000)
 
 These are 2.00" x 0.25" labels for 96-well plates. They turn black when exposed to 70% isopropanol (still need to test with ethanol).
 
 A 1020x440 pixel image printed with `lpr -o media=Custom.51x22mm` will have its sides and bottom aligned with the label. The top ~49 pixels will not be printed.
 
+An example label is `examples/diversified_biotech_wetgrip_GRDT-5000_plate_label.png`.
+
 ## Diversified BioTech Xylene Resistant [RVTH-3000](https://www.divbio.com/product/rvth-3000)
 
 These are a bit large for normal 2 ml cryotubes but they can work. They are resistant (but not immune) to 70% ethanol. Much less so for 70% isopropanol.
 
 A 560x1083 pixel image printed with `lpr -o media=Custom.20x39mm` will fill the label.
+
+An example label is `diversified_biotech_tough_tags_RVTH-3000_medium_tube_labels.png`.
 
 # ToDo
 
