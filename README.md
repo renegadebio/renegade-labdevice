@@ -230,28 +230,28 @@ If you already installed the printer, uninstall with e.g:
 sudo lpadmin -x "LabelWriter-450-turbo"
 ```
 
-Find the vendor ID using the `lsusb` command. You should see a line for you printer like:
+Find the vendor ID and serial number using:
 
 ```
-Bus 001 Device 015: ID 0922:0020 Dymo-CoStar Corp. LabelWriter 450
+lsusb -v | less
 ```
 
-Where `0922` is the vendor id.
-
-Find the serial number using `lpinfo -v`. You should see a line like:
+Scroll to the entry for your device. For the vendor ID you're looking for a line like:
 
 ```
-direct usb://DYMO/LabelWriter%20450?serial=01010112345600
+  idVendor           0x0922 Dymo-CoStar Corp.
 ```
 
-Where your serial number is `01010112345600`.
+and for the serial number the line will look like:
+
+```
+  iSerial                 3 19110823073859
+```
 
 Now create a `.rules` file for your printer in `/etc/udev/rules.d/` e.g. `/etc/udev/rules.d/my-dymo-labelwriter-01010112345600.rules`:
 
 ```
-ATTRS{idVendor}=="0922"
-ATTRS{serial}=="01010112345600"
-SYMLINK+="dymo/labelwriter-01010112345600"
+ATTRS{idVendor}=="0922", ATTRS{serial}=="01010112345600", SYMLINK+="dymo/labelwriter-01010112345600"
 ```
 
 replacing the vendor ID and serial number with the the info for your printer. The last line specified which `/dev/` device this printer will show up as.
@@ -262,7 +262,7 @@ Make `udev` notice the changes by running:
 udevadm trigger
 ```
 
-You may have to unplug and replug your printer. Ensure the device you specified on the `SYMLINK` line shows up, e.g: `/dev/dymo/labelwriter-01010112345600`.
+Ensure the device you specified on the `SYMLINK` line shows up, e.g: `/dev/dymo/labelwriter-01010112345600`.
 
 Now re-install your printer, but this time using the new `/dev/` path for your device URI like so:
 
