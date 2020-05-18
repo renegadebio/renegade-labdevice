@@ -3,8 +3,8 @@ A small node app that is meant to run on a single-board computer and securely co
 
 Specifically, the following device-types are supported:
 
-* Plain USB webcams (for scanning DataMatrix codes only)
 * USB thermal label printers
+* Plain USB webcams (for scanning DataMatrix codes only)
 
 For printers this allows printing from the renegade-lims web app to in-lab thermal printers. 
 
@@ -12,11 +12,11 @@ For scanners this makes it possible to show scan results in the renegade-lims we
 
 # Supported barcode scanners
 
-* Any USB scanner that shows up as a USB keyboard (e.g. Kercan KR-201)
 * Any USB scanner that shows up as a webcam (e.g. SUMLUNG scanners from alibaba)
 
 # Supported label printers
 
+* Dymo LabelWriter 450
 * Dymo LabelWriter 450 Turbo
 * Dymo LabelWriter 4XL
 * Brother QL-570
@@ -28,11 +28,7 @@ Other similar models may work but have not been tested.
 
 ## installing node.js
 
-You might already have node.js installed. If so, ensure it is a recent version. If not, first log in as the non-root user you intend to run this application, then install nvm (node version manager):
-
-```
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.2/install.sh | bash
-```
+You might already have node.js installed. If so, ensure it is a recent version. If not, first log in as the non-root user you intend to run this application, then install [nvm (node version manager)](https://github.com/nvm-sh/nvm).
 
 Log out, then log back in, then use nvm to install node:
 
@@ -44,7 +40,7 @@ Now clone this repository into the user's homedir:
 
 ```
 cd ~/
-git clone https://github.com/Juul/renegade-labdevice
+git clone https://github.com/renegadebio/renegade-labdevice
 ```
 
 To install the node dependencies do:
@@ -56,10 +52,10 @@ npm install
 
 ## printer driver dependencies
 
-If you're using this with a printer install the C program that talks to the printer, fetch the ql-printer-driver repository:
+If you're using this with a Brother printer then install the C program that talks to the printer. Fetch the ql-printer-driver repository:
 
 ```
-git clone https://github.com/biobricks/ql-printer-driver
+git clone https://github.com/renegadebio/ql-printer-driver
 ```
 
 and follow the instructions in the included README.md
@@ -214,7 +210,7 @@ To list all printer drivers (for the `-m` argument in `lpadmin -p`):
 lpinfo -m
 ```
 
-To remove a printer then do e.g:
+To remove a printer do e.g:
 
 ```
 sudo lpadmin -x LabelWriter-450-turbo
@@ -264,7 +260,7 @@ udevadm trigger
 
 Ensure the device you specified on the `SYMLINK` line shows up, e.g: `/dev/dymo/labelwriter-01010112345600`.
 
-Now re-install your printer, but this time using the new `/dev/` path for your device URI like so:
+Now (re-)install your printer, but this time using the new `/dev/` path for your device URI like so:
 
 ```
 sudo lpadmin -p "LabelWriter-450-turbo" -v file:/dev/dymo/labelwriter-01010112345600 -m lw450t.ppd
