@@ -200,7 +200,7 @@ lpinfo -v|grep "usb://"
 To install a printer do e.g.:
 
 ```
-sudo lpadmin -p "LabelWriter-450-turbo" -v usb://DYMO/LabelWriter%20450%20Turbo?serial=13011612335742 -m lw450t.ppd
+sudo lpadmin -p "LabelWriter-450-turbo" -v usb://DYMO/LabelWriter%20450%20Turbo?serial=13011612335742 -m dymo:0/cups/model/lw450t.ppd
 ```
 
 
@@ -247,7 +247,7 @@ and for the serial number the line will look like:
 Now create a `.rules` file for your printer in `/etc/udev/rules.d/` e.g. `/etc/udev/rules.d/my-dymo-labelwriter-01010112345600.rules`:
 
 ```
-ATTRS{idVendor}=="0922", ATTRS{serial}=="01010112345600", SYMLINK+="dymo/labelwriter-01010112345600"
+SUBSYSTEM=="usbmisc", ATTRS{idVendor}=="0922", ATTRS{serial}=="01010112345600", SYMLINK+="dymo/labelwriter-01010112345600"
 ```
 
 replacing the vendor ID and serial number with the the info for your printer. The last line specified which `/dev/` device this printer will show up as.
@@ -260,33 +260,23 @@ udevadm trigger
 
 Ensure the device you specified on the `SYMLINK` line shows up, e.g: `/dev/dymo/labelwriter-01010112345600`.
 
+Edit `/etc/cups/cups-files.conf` to enable File device URIs by uncommenting and changing the `FileDevice` line:
+
+```
+FileDevice Yes
+```
+
+Restart cups:
+
+```
+sudo /etc/init.d/cups restart
+```
+
 Now (re-)install your printer, but this time using the new `/dev/` path for your device URI like so:
 
 ```
-sudo lpadmin -p "LabelWriter-450-turbo" -v file:/dev/dymo/labelwriter-01010112345600 -m lw450t.ppd
+sudo lpadmin -p "LabelWriter-450-turbo" -v file:/dev/dymo/labelwriter-01010112345600 -m dymo:0/cups/model/lw450t.ppd
 ```
-
-## Printer classes
-
-Create the printer class called `DYMO-Plate-labeler`:
-
-```
-sudo lpadmin -p "DYMO-LabelWriter-450-Turbo" -c "DYMO-Plate-Labeler"
-```
-
-Enable the class:
-
-```
-sudo cupsenable "DYMO-Plate-Labeler"
-```
-
-Start accepting jobs for the class:
-
-```
-sudo cupsaccept "DYMO-Plate-Labeler"
-```
-
-You can now print to the class as if it was a single printer using the class name as the printer name.
 
 # Setting up for production
 
