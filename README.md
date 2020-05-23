@@ -55,7 +55,7 @@ npm install
 If you're using this with a Brother printer then install the C program that talks to the printer. Fetch the ql-printer-driver repository:
 
 ```
-git clone https://github.com/renegadebio/ql-printer-driver
+git clone https://github.com/sudomesh/ql570
 ```
 
 and follow the instructions in the included README.md
