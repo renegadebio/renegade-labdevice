@@ -92,6 +92,16 @@ Copy the examples settings file:
 cp settings.js.example settings.js
 ```
 
+and edit to your liking.
+
+Then copy the example devices file:
+
+```
+cp devices.json.example devices.json
+```
+
+and edit to your liking. Note that comments are allowed in this `.json` file.
+
 ## TLS certificates
 
 ```
@@ -278,6 +288,13 @@ Now (re-)install your printer, but this time using the new `/dev/` path for your
 sudo lpadmin -p "LabelWriter-450-turbo" -v file:/dev/dymo/labelwriter-01010112345600 -m dymo:0/cups/model/lw450t.ppd
 ```
 
+Then activate the printer using:
+
+```
+sudo cupsenable "LabelWriter-450-turbo"
+sudo cupsaccept "LabelWriter-450-turbo"
+```
+
 # Setting up for production
 
 The renegade-labdevice software should be installed under a non-root user account, so as root add a user account, e.g:
@@ -324,7 +341,7 @@ update-rc.d renegade-labdevice defaults
 
 These labels are 29 mm wide for narrow labels and 62 mm wide for wide labels and come as one continous label which is cut by the printer.
 
-The source image should be a monochrome (not greyscale) PNG of size 1083x336 for narrow labels. The length of the label is the width of the provided image. Note that anything shorter than a 1083 pixel wide image won't print. It should be fine to print labels longer than 1083.
+The source image should be a monochrome (not greyscale) PNG of size 1083x336 for narrow labels and 1083x720 for wide labels. For continuous labels the length of the label is the width of the provided image. 
 
 There are several versions of the narrow Brother labels:
 
@@ -334,7 +351,7 @@ There are several versions of the narrow Brother labels:
 * DK-2212: Continous wide film labels
 * DK-2205: Continous wide paper labels
 
-The [ql-printer-driver](https://github.com/renegadebio/ql-printer-driver) is used to print these labels.
+The [ql570](https://github.com/sudomesh/ql570) is used to print these labels.
 
 The command for continous narrow labels is:
 

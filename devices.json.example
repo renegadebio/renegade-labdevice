@@ -1,0 +1,58 @@
+[{
+  // The device (scanner or printer) name
+  // Used to identify this device on servers with multiple devices
+  // It is a good idea to include the physical location in this name
+  // MUST NOT CONTAIN SINGLE QUOTES (')
+  "name": "My lab's QL-700",
+
+  // The device identifier
+  // ql is likely: /dev/usb/lp0
+  // dymo is the printer name as given by `lpstat -p`
+  //   e.g. "DYMO-LabelWriter-4XL-17032419591234"
+  // webcamScanner is likely: /dev/video0
+  // keyboardScanner is "vendor_id:product_id" as reported by lsusb
+  //   e.g: "060e:16c1"
+  "dev": '/dev/usb/lp0',
+
+  // type can be one of:
+  // 'ql'
+  // 'cups'
+  // 'webcamScanner'
+  // 'keyboardScanner'
+  "type": 'ql',
+
+  // The print command. Only relevant for printers.
+  // For the 'ql' type this should be the path ql570 command,
+  // or just 'ql570' if the command is in your PATH
+  // For the 'cups' type it is probably safe to leave it at 'lpr'
+  // Default for ql: 'ql570'
+  // Default for cups: 'lpr'
+  "cmd": "ql570",
+
+  "labels": {
+    "name": "QR-code labels",
+    "description": "Continuous narrow film labels 29 mm width (DK-2211)",
+    "type": "29" // one of the types supported by the ql570 command
+  },
+
+  // For CUPS printers, set this to true if your driver
+  // support sending the number of copies with lpr, e.g:
+  // lpr -# 3
+  // If this is false then copies will be sent as individual print jobs
+  "supportsCopies": false
+}, {
+  
+  "name": "My lab's LabelWriter 450 Turbo",
+  "dev": 'DYMO-LabelWriter-450-Turbo',
+  "type": 'cups',
+  "cmd": "lpr",
+
+  "labels": {
+    "name": "CryoTube labels",
+    "description": 'Diversified BioTech DT WetGrip 2.00" x 0.25" (GRDT-5000)',
+    "args": "-o media=Custom.51x22mm" // passed to the lpr command
+  },
+  
+  "supportsCopies": true
+  
+}]

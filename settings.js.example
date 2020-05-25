@@ -6,62 +6,6 @@ module.exports = {
   // name of this labdevice server
   name: "Dexter's laboratory labdevice server 0",
 
-  devices: [{
-    // The device (scanner or printer) name
-    // Used to identify this device on servers with multiple devices
-    // It is a good idea to include the physical location in this name
-    // MUST NOT CONTAIN SINGLE QUOTES (')
-    name: "My lab's QL-700",
-
-    // The device identifier
-    // qlPrinter is likely: /dev/usb/lp0
-    // dymoPrinter is the printer name as given by `lpstat -p`
-    //   e.g. "DYMO-LabelWriter-4XL-17032419591234"
-    // webcamScanner is likely: /dev/video0
-    // keyboardScanner is "vendor_id:product_id" as reported by lsusb
-    //   e.g: "060e:16c1"
-    device: '/dev/usb/lp0',
-
-    // type can be one of:
-    // 'qlPrinter'
-    // 'dymoPrinter'
-    // 'webcamScanner'
-    // 'keyboardScanner'
-    type: 'qlPrinter',
-
-    // The print command. Only relevant for printers.
-    // For the 'qlPrinter' type this should be the path ql570 command,
-    // or just 'ql570' if the command is in your PATH
-    // For the 'dymoPrinter' type it is probably safe to leave it at 'lpr'
-    // Default for qlPrinter: 'ql570'
-    // Default for dymoPrinter: 'lpr'
-    cmd: "ql570",
-
-    // Additional command arguments (optional)
-    args: '',
-
-    // Only relevant for type: 'qlPrinter'
-    // The paper type. 'n' for narrow paper or 'w' for wide paper
-    // Default: 'n'
-    paperType: 'n',
-
-
-    // For DYMO printers, set this to true if your driver
-    // support sending the number of copies with lpr, e.g:
-    // lpr -# 3
-    // If this is false then copies will be sent as individual print jobs
-    supportsCopies: false
-  }, {
-  
-    name: "My lab's LabelWriter 450 Turbo",
-    device: 'DYMO-LabelWriter-450-Turbo',
-    type: 'dymoPrinter',
-    cmd: "lpr",
-    args: "-o media=Custom.20x39mm",
-    supportsCopies: true
-    
-  }],
-
   // The bionet node's host name to which you wish to connect
   host: "localhost",
   port: 4200,
@@ -75,6 +19,36 @@ module.exports = {
   serverTLSCert: fs.readFileSync('tls/server-cert.pem'),
 
   // How often to check if the server is still there
-  heartbeatRate: 3000 // in ms
+  heartbeatRate: 3000, // in ms
+
+  lprPath: 'lpr', // defaults to 'lpr' which is expected to be in your PATH
+  ql570Path: 'ql570', // defaults to 'ql750' which is expected to be in your PATH
+
+  // Directory where printer devices appear
+  devPrintersPath: '/dev/printers', // defaults to '/dev/printers'
+
+  // List of supported label types for each printer type
+  // Note that this section is not used
+  // if you only ever edit devices.json manually
+  labelTypes: {
+    brother: [
+      {
+        name: "QR-code labels",
+        description: "Continuous narrow film labels 29 mm width (DK-2211)",
+        type: "29" // one of the types supported by the ql570 command
+      }
+    },
+    dymo: [
+      {
+        name: "CryoTube labels",
+        description: 'Diversified BioTech DT WetGrip 2.00" x 0.25" (GRDT-5000)',
+        arg: "-o media=Custom.51x22mm" // passed to the lpr command
+      }, {
+        name: "Plate labels",
+        description: 'Diversified BioTech DT Xylene Resistant 1.50" x 0.75" (RVTH-3000)',
+        arg: "-o media=Custom.20x39mm"
+      },
+    ]
+  }
   
 };

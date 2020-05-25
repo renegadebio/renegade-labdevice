@@ -9,12 +9,17 @@ const minimist = require('minimist');
 const ndjson = require('ndjson');
 const tmp = require('tmp');
 const uuid = require('uuid').v4;
+const JSONC = require('comment-json');
 const rpc = require('rpc-multistream');
 var HID; // included on demand
 
 const limsConnector = require('renegade-lims-connector');
 
 const scancodeDecode = require('../scancode_decode.js');
+
+const devicesFilePath = path.join(__dirname, '..', 'devices.json');
+
+var devices;
 
 const argv = minimist(process.argv.slice(2), {
   alias: {
@@ -41,6 +46,7 @@ settings.device = argv.device || settings.device;
 settings.cmd = argv.cmd || settings.cmd;
 settings.name = settings.name.replace(/^\w\d\.\-_]+/, '-');
 settings.debug = argv.debug || settings.debug;
+settings.devPrintersPath = settings.devPrintersPath || '/dev/printers';
 
 console.log("Using device name:", settings.name);
 
@@ -79,20 +85,21 @@ function printLabel(device, path, copies, cb) {
 
   var cmd;
 
+  var args = (device.args || '') + ' ' + (device.labels.args || '');
+  
   if(device.type === 'qlPrinter') {
-    cmd = (device.cmd || 'ql570') + " '" + device.device + "' " + (device.paperType || 'n')  + " " + (device.args || '') + " '" + path + "'";
+    cmd = (device.cmd || 'ql570') + " '" + device.dev + "' " + (device.labels.type || 'n')  + " " + args + " '" + path + "'";
     
     if(device.supportsCopies) {
       device.supportsCopies = false;
     }
 
-  } else if(device.type === 'dymoPrinter') {
+  } else if(device.type === 'cupsPrinter') {
 
-    var args = (device.args || '');
     if(device.supportsCopies) {
       args += ' -# '+copies;
     }
-    cmd = (device.cmd || 'lpr') + " -P '"+device.device+"' "+args+" '"+path+"'"
+    cmd = (device.cmd || 'lpr') + " -P '"+device.dev+"' "+args+" '"+path+"'"
   }
   
   debug("Running command: " + cmd);
@@ -113,13 +120,139 @@ function printLabel(device, path, copies, cb) {
   });
 }
 
+function writeDevicesFile(devices, cb) {
+  try {
+    var data = JSONC.stringify(devices);
+  } catch(e) {
+    return cb(e);
+  }
+  
+  tmp.tmpName(function(err, tmpPath) {
+    if(err) return cb(err);
+    
+    fs.writeFile(tmpPath, data, {encoding: 'utf8'}, function(err) {
+      if(err) return cb(err);
+
+      fs.rename(tmpPath, devicesFilePath, cb);
+    });
+  });
+}
+
+function listBrotherPrinters(cb) {
+  var r = new RegExp(/^brother/i);
+
+  // TODO implement
+  fs.readdir(settings.devPrintersPath, function(err, files) {
+    if(err) return cb(err);
+
+    var printers = [];
+    var m, devFile;
+    for(let file of files) {
+      m = file.match(r);
+      if(!m) continue;
+
+      devFile = m[1];
+      
+      printers.push({
+        dev: path.join(settings.devPrintersPath, devFile),
+        name: devFile.replace(/_+/, ' ')
+      });
+    }
+
+    cb(null, printers);
+  });
+}
+
+function listCUPSPrinters(cb) {
+  var rDev = new RegExp(":\\s+"+settings.devPrintersPath);
+  var rName = new RegExp("device for ([^:]+):", 'i');
+
+  var printers = [];
+  
+  childProcess.exec("lpstat -v", {}, function(err, stdout, stderr) {
+    if(err) return cb(err);
+
+    var m, printerName;
+    var lines = stdout.split(/\r?\n/);
+    for(let line of lines) {
+      if(!line.match(rDev)) continue;
+      m = line.match(rName);
+      if(!m) continue;
+
+      printerName = m[1];
+      
+      printers.push({
+        dev: printerName,
+        name: printerName.replace(/_+/, ' ')
+      });
+    }
+
+    cb(null, printers);
+  });
+}
+
+function getDeviceByDev(dev) {
+  for(let device of devices) {
+    if(device.dev === dev) {
+      return device;
+    }
+  }
+  return null;
+}
+
+function getAllPrinters(cb) {
+  listBrotherPrinters(function(err, brotherPrinters) {
+    if(err) return cb(err);
+
+    listCUPSPrinters(function(err, cupsPrinters) {
+      if(err) return cb(err);
+
+      var printers = brotherPrinters.concat(cupsPrinters);
+
+      cb(null, printers);
+    });
+  });
+}
+
+// printer has printer.dev and printer.type 
+// label has label.name and (label.type for brother or label.arg for dymo)
+function installPrinter(printer, label, name, opts,  cb) {
+  if(!printer.type) return cb(new Error("Printer type not specified"));
+  if(!printer.dev) return cb(new Error("No CUPS printer name nor device path specified"));
+  
+  if(!name) return cb(new Error("No printer name specified"));
+
+  if(!label || !label.name) return cb(new Error("No label specified"));
+
+  printer.name = name.replace(/'/g, '');
+
+  if(printer.type === 'ql') {
+    printer.cmd = settings.ql570Path || 'ql570';
+    
+    if(!label.type) return cb(new Error("No label type specified"));
+    
+  } else if(printer.type === 'cups') {
+    printer.cmd = settings.lprPath || 'lpr';
+    
+    printer.supportsCopies = opts.supportsCopies;
+    
+  } else {
+    return cb(new Error("Cannot install printer: Unknown printer type: " + printer.type));
+  }
+  
+  printer.labels = label;
+
+  devices.push(printer);
+
+  writeDevicesFile(devices, cb);
+}
 
 var clientRPC = {
   identify: function(cb) {
     var devices = [];
     var i, device;
-    for(i=0; i < settings.devices.length; i++) {
-      device = settings.devices[i];
+    for(i=0; i < devices.length; i++) {
+      device = devices[i];
       devices.push({
         index: i,
         name: device.name,
@@ -134,22 +267,89 @@ var clientRPC = {
     });
   },
 
+  listLabelTypes: function(printerType, cb) {
+    if(!printerType) return cb(new Error("printerType must be specified"));
+    if(!settings.labelTypes) return cb(new Error("labdevice settings do not specify any label types"));
+    
+    var labelTypes = [];
+    var types = settings.labelTypes[printerType];
+    if(!types) return cb(new Error("No label types found for printer type: " + printerType));
 
+    for(let type of types) {
+      if(!type.name) continue;
+      labelTypes.push(type.name);
+    }
+    cb(null, labelTypes);
+  },
+
+  listInstallablePrinters: getAllPrinters,
+
+  // printerType is 'ql' or 'cups'
+  // devFileOrName is a '/dev/printers/' path
+  installPrinter: function(printerType, devFileOrName, labelTypeName, name, opts, cb) {
+    // TODO implement
+    if(getDeviceByDev(devFileOrName)) {
+      return cb(new Error("Device is already installed"));
+    }
+
+    getAllPrinters(function(err, printers) {
+      if(err) return cb(err);
+
+      var toInstall;
+      for(let printer of printers) {
+        if(printer.dev === devFileOrName && printer.type === printerType) {
+          toInstall = printer;
+          break;
+        }
+      }
+      if(!toInstall) {
+        return cb(new Error("No such printer available"));
+      }
+
+      var label;
+      var labelTypes = settings.labelTypes[printerType];
+      if(!labelTypes) {
+        return cb(new Error("No label types defined for printer type: " + printerType));
+      }
+
+      for(let labelType of labelTypes) {
+        if(labelType.name === labelTypeName) {
+          label = labelType;
+          break;
+        }
+      }
+      if(!label) {
+        cb(new Error("No such label type defined: " + labelTypeName));
+      }
+      
+      installPrinter(toInstall, label, name, opts, cb);
+    });
+  },
+
+  // for changing a device, e.g. changing the device name or paper type
+  saveDevice: function(deviceName, device, cb) {
+    return cb(new Error("TODO not yet implemented"));
+  },
+
+  removeDevice: function(deviceName, cb) {
+    return cb(new Error("TODO not yet implemented"));
+  },
+  
   print: function(indexOrType, streamOrBuffer, copies, cb) {
     var device;
     
     if(typeof indexOrType === 'string') {
       var i;
-      for(i=0; i < settings.devices.length; i++) {
-        if(settings.devices[i].type === indexOrType) {
-          device = settings.devices[i];
+      for(i=0; i < devices.length; i++) {
+        if(devices[i].type === indexOrType) {
+          device = devices[i];
           break;
         }
       }
 
       if(!device) return cb(new Error("No printer device of specified type found."));
     } else {
-      device = settings.devices[indexOrType];
+      device = devices[indexOrType];
       if(!device) return cb(new Error("No device with index: " + indexOrType));
     }
     if(!device.type.match(/Printer$/)) return cb(new Error("This device is not a printer"));
@@ -317,9 +517,19 @@ function disconnect() {
 }
 
 function initDevices(remote) {
+
+  try{
+    var str = fs.readFileSync(devicesFilePath, {encoding: 'utf8'});
+    devices = JSONC.parse(str);
+  } catch(e) {
+    console.error("Error reading devices.json. No devices loaded");
+    console.error(e);
+    devices = [];
+  }
+  
   var i, device;
-  for(i=0; i < settings.devices.length; i++) {
-    device = settings.devices[i];
+  for(i=0; i < devices.length; i++) {
+    device = devices[i];
     if(device.type === 'webcamScanner' && remote.reportScan) {
       webcamScanStart(remote);
       return;

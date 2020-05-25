@@ -3,12 +3,13 @@
   "version": "0.0.1",
   "dependencies": {
     "backoff": "^2.5.0",
+    "comment-json": "^3.0.2",
     "minimist": "^1.2.0",
     "ndjson": "^1.4.3",
+    "renegade-lims-connector": "git+https://github.com/renegadebio/renegade-lims-connector.git",
     "rpc-multistream": "^0.9.7",
     "tmp": "0.0.28",
-    "uuid": "^3.0.1",
-    "renegade-lims-connector": "git+https://github.com/renegadebio/renegade-lims-connector.git"
+    "uuid": "^3.0.1"
   },
   "scripts": {
     "start": "bin/cmd.js"
