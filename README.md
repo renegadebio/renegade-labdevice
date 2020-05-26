@@ -173,10 +173,10 @@ to:
 *cupsManualCopies: True
 ```
 
-Then restart CUPS:
+Then reload CUPS:
 
 ```
-sudo systemctl restart cups
+sudo /etc/init.d/cups reload
 ```
 
 Now you can set `supportsCopies: true` in `settings.js`.
