@@ -168,8 +168,8 @@ function nicifyPrinterName(printerName) {
   printerName = printerName.replace(/_+/g, ' ');
   var parts = printerName.split(/-+/);
 
-  // For e.g. the name "DYMO-DYMO LabelWriter-01234"
-  // get rid od the first 'DYMO'
+  // For e.g. the name "DYMO-DYMO LabelWriter 450-01234"
+  // get rid of the first 'DYMO'
   if(parts.length > 1 && parts[1].length > parts[0].length) {
     if(parts[0].toLowerCase() === parts[1].toLowerCase().slice(0, parts[0].length)) {
       parts[1] = parts[1].slice(parts[0].length);
