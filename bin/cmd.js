@@ -87,14 +87,14 @@ function printLabel(device, path, copies, cb) {
 
   var args = (device.args || '') + ' ' + (device.labels.args || '');
   
-  if(device.type === 'qlPrinter') {
+  if(device.type === 'ql') {
     cmd = (device.cmd || 'ql570') + " '" + device.dev + "' " + (device.labels.type || 'n')  + " " + args + " '" + path + "'";
     
     if(device.supportsCopies) {
       device.supportsCopies = false;
     }
 
-  } else if(device.type === 'cupsPrinter') {
+  } else if(device.type === 'cups') {
 
     if(device.supportsCopies) {
       args += ' -# '+copies;
@@ -265,23 +265,20 @@ function installPrinter(printer, label, name, opts,  cb) {
   writeDevicesFile(devices, cb);
 }
 
+function addIndex(devs) {
+  for(let i=0; i < devs.length; i++) {
+    devs[i].index = i;
+  }
+  return devs;
+}
+
 var clientRPC = {
   identify: function(cb) {
-    var devices = [];
-    var i, device;
-    for(i=0; i < devices.length; i++) {
-      device = devices[i];
-      devices.push({
-        index: i,
-        name: device.name,
-        type: device.type
-      })
-    }
 
     cb(null, {
       id: nodeID,
       name: settings.name,
-      devices: devices
+      devices: addIndex(devices)
     });
   },
 
@@ -355,6 +352,8 @@ var clientRPC = {
   
   print: function(indexOrType, streamOrBuffer, copies, cb) {
     var device;
+
+    debug("Print called with indexOrType:", indexOrType);
     
     if(typeof indexOrType === 'string') {
       var i;
@@ -370,7 +369,7 @@ var clientRPC = {
       device = devices[indexOrType];
       if(!device) return cb(new Error("No device with index: " + indexOrType));
     }
-    if(!device.type.match(/Printer$/)) return cb(new Error("This device is not a printer"));
+    if(!device.type.match(/cups/) && !device.type.match(/ql/)) return cb(new Error("This device is not a printer"));
 
     tmp.tmpName(function(err, path) {
       if(err) return cb(err);
@@ -380,7 +379,10 @@ var clientRPC = {
       function fileWritten() {
         debug("File was written: " + path);
         printLabel(device, path, copies || 1, (err) => {
-          if(err) console.error(err);
+          if(err) {
+            console.error(err);
+            return cb(err);
+          }
           if(!argv.keep) {
             debug("Deleting file: " + path);
             fs.unlink(path, cb);
