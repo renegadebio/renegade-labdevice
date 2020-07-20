@@ -12,14 +12,14 @@
   // webcamScanner is likely: /dev/video0
   // keyboardScanner is "vendor_id:product_id" as reported by lsusb
   //   e.g: "060e:16c1"
-  "dev": '/dev/usb/lp0',
+  "dev": "/dev/usb/lp0",
 
   // type can be one of:
   // 'ql'
   // 'cups'
   // 'webcamScanner'
   // 'keyboardScanner'
-  "type": 'ql',
+  "type": "ql",
 
   // The print command. Only relevant for printers.
   // For the 'ql' type this should be the path ql570 command,
@@ -43,13 +43,13 @@
 }, {
   
   "name": "My lab's LabelWriter 450 Turbo",
-  "dev": 'DYMO-LabelWriter-450-Turbo',
-  "type": 'cups',
+  "dev": "DYMO-LabelWriter-450-Turbo",
+  "type": "cups",
   "cmd": "lpr",
 
   "labels": {
     "name": "CryoTube labels",
-    "description": 'Diversified BioTech DT WetGrip 2.00" x 0.25" (GRDT-5000)',
+    "description": "Diversified BioTech DT WetGrip 2.00\" x 0.25\" (GRDT-5000)",
     "args": "-o media=Custom.51x22mm" // passed to the lpr command
   },
   

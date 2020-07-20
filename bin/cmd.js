@@ -100,7 +100,12 @@ function printLabel(device, path, copies, cb) {
       args += ' -# '+copies;
     }
     cmd = (device.cmd || 'lpr') + " -P '"+device.dev+"' "+args+" '"+path+"'"
+  } else if(device.type === 'cmd') {
+
+    cmd = device.cmd + " " +args+" '"+path+"'"
   }
+
+  
   
   debug("Running command: " + cmd);
 
@@ -369,7 +374,7 @@ var clientRPC = {
       device = devices[indexOrType];
       if(!device) return cb(new Error("No device with index: " + indexOrType));
     }
-    if(!device.type.match(/cups/) && !device.type.match(/ql/)) return cb(new Error("This device is not a printer"));
+    if(!device.type.match(/cups/) && !device.type.match(/ql/) && !device.type.match(/cmd/)) return cb(new Error("This device is not a printer"));
 
     tmp.tmpName(function(err, path) {
       if(err) return cb(err);

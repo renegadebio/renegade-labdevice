@@ -37,7 +37,7 @@ module.exports = {
         description: "Continuous narrow film labels 29 mm width (DK-2211)",
         type: "29" // one of the types supported by the ql570 command
       }
-    },
+    ],
     dymo: [
       {
         name: "CryoTube labels",
